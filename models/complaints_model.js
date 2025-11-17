@@ -1,0 +1,17 @@
+const mongoose=require('mongoose')
+
+const complaintschema=new mongoose.Schema({
+
+    user_id:{type:mongoose.Schema.Types.ObjectId,ref:"users",required:true},
+    provider_id:{type:mongoose.Schema.Types.ObjectId,ref:"providers",required:true},
+    booking_id:{type:mongoose.Schema.Types.ObjectId,ref:"bookings",required:true},
+    complaints_text:{type:String,required:true},
+    status:{type:String,enum:["pending","resolved","rejected"],default:"pending",required:true},
+    createdAt:{type:Date,required:true},
+    resolvedAt:{type:Date}
+
+}, { timestamps: true })
+
+const complaints=mongoose.model('complaints',complaintschema)
+
+module.exports=complaints
