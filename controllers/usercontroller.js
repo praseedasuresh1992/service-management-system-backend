@@ -3,13 +3,13 @@ const bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
 const usermodel = require('../models/usermodel');
 
-// ✅ Register user (admin/staff)
+//  Register user (admin/staff)
 exports.createuser = async (req, res) => {
   try {
-    const { Name,email,address,contactno, username, password } = req.body;
+    const { name,email,address,contactno, username, password } = req.body;
     const hashedpassword = await bcrypt.hash(password, 10);
     const newuser = new usermodel({
-      Name,
+      name,
       email,
       address,
       contactno,
@@ -38,7 +38,7 @@ exports.viewuser = async (req, res) => {
   }
 };
 
-// ✅ Login (checks both user and customer)
+// Login (checks both user and customer)
 exports.loginUser = async (req, res) => {
   try {
     console.log('🟡 Login Body:', req.body);
@@ -57,12 +57,12 @@ exports.loginUser = async (req, res) => {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    // Step 4 — Validate password
+    // Validate password
     const ismatch = await bcrypt.compare(password, currentuser.password);
     if (!ismatch)
       return res.status(400).json({ message: 'Invalid Password' });
 
-    // Step 5 — Generate token
+    //  Generate token
     const token = jwt.sign(
       {
         id: currentuser._id,
@@ -80,7 +80,7 @@ exports.loginUser = async (req, res) => {
       secure: false,
     });
 
-    // Step 7 — Send response
+    // Send response
     const userdata = {
       _id: currentuser._id,
       username: currentuser.username,

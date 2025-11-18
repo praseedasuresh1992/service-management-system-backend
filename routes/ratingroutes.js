@@ -4,8 +4,8 @@ const authcontroller=require('../controllers/authcontroller')
 const auth=require('../middleware/auth')
 
 
-router.post('/addrating',auth.authuser,authcontroller.addrating)
-router.get('/viewrating',auth.authuser,authcontroller.viewrating)
+router.post('/addrating',)
+router.get('/viewrating',)
 
 
 

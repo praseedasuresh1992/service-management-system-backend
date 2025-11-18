@@ -4,10 +4,10 @@ const authcontroller=require('../controllers/authcontroller')
 const auth=require('../middleware/auth')
 
 
-router.post('/addcategory',auth.authorizeRoles[admin],authcontroller.add_category)
-router.post('/updatecategory',auth.authorizeRoles[admin],authcontroller.update_category)
-router.post('/deletecategory',auth.authorizeRoles[admin],authcontroller.deletecategory)
-router.get('/viewcategory',auth.authuser,authcontroller.view_category)
+router.post('/addcategory',)
+router.post('/updatecategory',)
+router.post('/deletecategory',)
+router.get('/viewcategory',)
 
 
 module.exports=router
