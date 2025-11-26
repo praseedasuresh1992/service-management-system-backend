@@ -7,6 +7,9 @@ const connectdb=require('./config/db')
 connectdb()
 
 const userroutes=require("./routes/userroutes")
+const providerroutes=require("./routes/providerroutes")
+const bookingroutes=require("./routes/booking_routes")
+
 const corsOptions = {
   origin: ['https://user-first-program-front-end.vercel.app','http://localhost:5173'], // must be exact frontend URL
   credentials: true, // allow cookies, headers, etc.
@@ -20,6 +23,8 @@ app.use(express.json())
 app.get('/',(req,res)=>{res.send("Welcome")})
 
 app.use('/',userroutes)
+app.use('/',providerroutes)
+app.use('/',bookingroutes)
 app.listen(process.env.PORT,()=>{
     console.log(`Listening at port ${process.env.PORT}`)
 })

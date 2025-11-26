@@ -1,17 +1,15 @@
 const mongoose=require('mongoose')
 
-const userschema=new mongoose.Schema({
+const adminschema=new mongoose.Schema({
 
     name:{type:String,required:true},
     email:{type:String,required:true,unique:true},
-    address:{type:String,required:true},
     contactno:{type:String,required:true},
     username:{type:String,required:true,unique:true},
     password:{type:String,required:true},
-    role:{type:String,default:"user"}
-
+    role:{type:String,default:"admin"}
 }, { timestamps: true })
 
-const user=mongoose.model('users',userschema)
+const admin=mongoose.model('admin',adminschema)
 
-module.exports=user
+module.exports=admin

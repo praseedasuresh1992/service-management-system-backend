@@ -30,6 +30,8 @@ exports.createuser = async (req, res) => {
 exports.viewuser = async (req, res) => {
   try {
     const finduser = await usermodel.find();
+    if(!finduser)
+      return res.status(200).json({message:"there are no users registered"})
     return res.status(200).json({ message: 'Success', data: finduser });
   } catch (err) {
     return res
@@ -38,67 +40,21 @@ exports.viewuser = async (req, res) => {
   }
 };
 
-// Login (checks both user and customer)
-exports.loginUser = async (req, res) => {
-  try {
-    console.log('🟡 Login Body:', req.body);
 
-    const { username, password } = req.body;
-    if (!username || !password)
-      return res
-        .status(400)
-        .json({ message: 'Username and password required' });
+exports.deleteuser=async(req,res)=>{
+  console.log("entered")
+    try{
+    const {id}=req.params
+    console.log(id)
+        const deleteduser=await usermodel.findByIdAndDelete(id)
+  
+    if(!deleteduser)
+            return res.status(404).json({message:"not found"})
+    return res.status(200).json({message:"Deletion successfull",data:deleteduser})
 
-    // Step 1 — Check in usermodel
-    let currentuser = await usermodel.findOne({ username });
-    console.log(" not in user");
-    if (!currentuser) {
-      console.log(' User not found:', username);
-      return res.status(400).json({ message: 'User not found' });
-    }
-
-    // Validate password
-    const ismatch = await bcrypt.compare(password, currentuser.password);
-    if (!ismatch)
-      return res.status(400).json({ message: 'Invalid Password' });
-
-    //  Generate token
-    const token = jwt.sign(
-      {
-        id: currentuser._id,
-        username: currentuser.username,
-        role: currentuser.role || 'user',
-      },
-      process.env.secretekey,
-      { expiresIn: '1d' }
-    );
-
-    // Step 6 — Set cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
-    });
-
-    // Send response
-    const userdata = {
-      _id: currentuser._id,
-      username: currentuser.username,
-      role: currentuser.role || 'customer',
-      Name: currentuser.name || currentuser.name,
-    
-    };
-
-    return res
-      .status(200)
-      .json({ message: 'Login successful', token, user: userdata });
-  } catch (err) {
-    console.error(' Login error:', err);
-    res.status(500).json({ message: err.message });
-  }
-};
-exports.logoutuser=(req,res)=>{
-    res.clearCookie("token")
-    console.log(res.cookie.token)
-    res.status(200).json({message:`Logout successfull`})
 }
+    catch(err){
+        return res.status(500).json({message:`server error ${err.message}`})
+    }
+}
+

@@ -1,15 +1,24 @@
 const express=require('express')
 const router=express.Router()
-const authcontroller=require('../controllers/authcontroller')
+const providercontroller=require('../controllers/providercontroller')
+const logincontroller=require("../controllers/login_controller")
 const auth=require('../middleware/auth')
 
 
-router.post('/registerprovider',)
-router.post('/updateprovider',)
-router.post('/login',)
-router.post('/deleteprovider',)
-router.get('/providerprofile',)
-router.get('/logoutprovider',)
+router.post('/registerprovider',providercontroller.addProvider)
+
+router.post('/login',logincontroller.loginUser)
+
+router.post('/updateprovider',auth.authuser,providercontroller.updateMyProfile)
+router.post("/verifyprovider/:id",providercontroller.updateProviderStatus)
+
+router.get('/viewallproviders',providercontroller.getProviders)
+router.get('/providerprofile/:id',providercontroller.providerProfile)
+router.get("/viewMyProviderProfile",auth.authuser,providercontroller.getmyprofile)
+
+router.delete('/deleteprovider/:id',providercontroller.deleteProvider)
+
+router.get('/logoutprovider',logincontroller.logoutuser)
 
 
 
