@@ -12,7 +12,7 @@ router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("providers","ad
 router.put('/updateBookingStatus/:id',auth.authuser,auth.authorizeRoles("providers","admin"),bookingcontroller.updateBookingStatus)
 router.put('/updatebooking/:id',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.updateBookingDetails)
 
-router.post('/deletebooking/:id',bookingcontroller.deletePendingBooking)
+router.post('/deletebooking/:id',bookingcontroller.deleteBooking)
 
 
 module.exports=router

@@ -175,7 +175,7 @@ exports.getFilteredBookings = async (req, res) => {
 };
 // Delete a booking if the provider not accepted the booking(if Status is pending)
 
-exports.deletePendingBooking = async (req, res) => {
+exports.deleteBooking = async (req, res) => {
     try {
         const { id } = req.params;
 
