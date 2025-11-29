@@ -12,6 +12,7 @@ exports.loginUser = async (req, res) => {
     console.log('🟡 Login Body:', req.body);
 
     const { username, password } = req.body;
+
     if (!username || !password)
       return res
         .status(400)
@@ -19,6 +20,7 @@ exports.loginUser = async (req, res) => {
 
     // Step 1 — Check in usermodel
     let currentuser = await usermodel.findOne({ username });
+    console.log("found",currentuser)
     if(!currentuser)
     {
         console.log("not in user model");
@@ -36,10 +38,12 @@ exports.loginUser = async (req, res) => {
     }
 
     // Validate password
+   
     const ismatch = await bcrypt.compare(password, currentuser.password);
     if (!ismatch)
+      
       return res.status(400).json({ message: 'Invalid Password' });
-
+    
     //  Generate token
     const token = jwt.sign(
       {
@@ -63,6 +67,7 @@ exports.loginUser = async (req, res) => {
       _id: currentuser._id,
       username: currentuser.username,
       Name: currentuser.name ,
+      role:currentuser.role
     
     };
 
