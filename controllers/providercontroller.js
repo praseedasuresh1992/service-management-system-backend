@@ -14,6 +14,7 @@ exports.addProvider = async (req, res) => {
               members,
              address,
              contactno,
+             service_category,
              available_location,
               username, 
               password } = req.body;
@@ -26,6 +27,7 @@ exports.addProvider = async (req, res) => {
               members,
              address,
              contactno,
+             service_category,
              available_location,
               username, 
               password :hashedpassword
@@ -95,6 +97,7 @@ exports.updateMyProfile = async (req, res) => {
             members,
             address,
             contactno,
+            service_category,
             available_location,
             username,
             password
@@ -109,6 +112,7 @@ exports.updateMyProfile = async (req, res) => {
         if (members) updateData.members = members;
         if (address) updateData.address = address;
         if (contactno) updateData.contactno = contactno;
+        if (service_category) updateData.service_category = service_category;
         if (available_location) updateData.available_location = available_location;
         if (username) updateData.username = username;
         if (password) updateData.password = password;

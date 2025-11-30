@@ -9,6 +9,7 @@ const providerschema=new mongoose.Schema({
     members:{type:Number,default:1},
     address:{type:String,required:true},
     contactno:{type:String,required:true},
+    service_category:{type:String, required :true},
     available_location:{type:String,required:true},
     username:{type:String,required:true,unique:true},
     password:{type:String,required:true},

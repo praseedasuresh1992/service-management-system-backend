@@ -1,14 +1,37 @@
-const mongoose=require('mongoose')
+const mongoose = require('mongoose');
 
-const commentschema=new mongoose.Schema({
+const commentschema = new mongoose.Schema({
 
-    user_id:{type:mongoose.Schema.Types.ObjectId,ref:"users",required:true},
-    provider_id:{type:mongoose.Schema.Types.ObjectId,ref:"providers",required:true},
-    category_id:{type:mongoose.Schema.Types.ObjectId,ref:"service_category",required:true},
-    rating:{type:String,required:true},
-    comments:{type:string,required:true},
-}, { timestamps: true })
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
+        required: true
+    },
 
-const comments=mongoose.model('comments',commentschema)
+    provider_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "providers",
+        required: true
+    },
 
-module.exports=comments
+    category_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "service_category",
+        required: true
+    },
+
+    rating: {
+        type: String,
+        required: true
+    },
+
+    comments: {
+        type: String,
+        required: true
+    }
+
+}, { timestamps: true });
+
+const comments = mongoose.model('comments', commentschema);
+
+module.exports = comments;

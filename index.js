@@ -12,6 +12,9 @@ const bookingroutes=require("./routes/booking_routes")
 const categoryroutes=require("./routes/category_routes")
 const complaintroutes=require("./routes/complaints_routes")
 const provideravailabiltyroutes=require("./routes/provider_availability_routes")
+const paymentroutes=require('./routes/payment_routes')
+const ratingroutes=require("./routes/ratingroutes")
+
 const corsOptions = {
   origin: ['https://service-management-system-client.vercel.app','http://localhost:5173'], // must be exact frontend URL
   credentials: true, // allow cookies, headers, etc.
@@ -30,6 +33,8 @@ app.use('/',bookingroutes)
 app.use('/',categoryroutes)
 app.use('/',complaintroutes)
 app.use("/",provideravailabiltyroutes)
+app.use('/',paymentroutes)
+app.use('/',ratingroutes)
 
 app.listen(process.env.PORT,()=>{
     console.log(`Listening at port ${process.env.PORT}`)

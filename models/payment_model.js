@@ -6,7 +6,7 @@ const paymentschema=new mongoose.Schema({
     user_id:{type:mongoose.Schema.Types.ObjectId,ref:"users",required:true},
     provider_id:{type:mongoose.Schema.Types.ObjectId,ref:"providers",required:true},
     amount:{type:Number,required:true},
-    method:{tyme:String,required:true},
+    method:{type:String,required:true},
     status:{type:String,enum:["pending","completed","cancelled"],default:"pending",required:true}
 
 }, { timestamps: true })
