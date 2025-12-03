@@ -34,6 +34,4 @@ app.use('/', require("./routes/provider_availability_routes"));
 app.use('/', require('./routes/payment_routes'));
 app.use('/', require("./routes/ratingroutes"));
 
-app.listen(process.env.PORT, () => {
-  console.log(`Listening at port ${process.env.PORT}`);
-});
+module.exports = app;
