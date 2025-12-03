@@ -5,7 +5,7 @@ const auth=require('../middleware/auth')
 
 
 router.post('/addcategory',categorycontroller.createcategory)
-router.get('/viewcategory',auth.authuser,auth.authorizeRoles("admin","providers"),categorycontroller.viewAllCategory)
+router.get('/viewcategory',auth.authuser,auth.authorizeRoles("admin","providers","user"),categorycontroller.viewAllCategory)
 
 router.put('/updatecategory/:id',auth.authuser,auth.authorizeRoles("admin"),categorycontroller.updatecategory)
 router.delete('/deletecategory/:id',auth.authuser,auth.authorizeRoles("admin"),categorycontroller.deleteCategory)

@@ -1,23 +1,34 @@
 const jwt=require('jsonwebtoken')
 require('dotenv').config();
 
-exports.authuser=(req,res,next)=>{
-    const token=req.cookies?.token || req.headers.authorization?.split(' ')[1]
-    console.log(token)
+exports.authuser = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  let token = null;
 
-    if(!token){
-        return res.status(400).json({message:"authenticaton required"})
-    }
-    try{
-        const verified=jwt.verify(token,process.env.secretekey)
-        req.user=verified
-        next()
-    }catch(err){
-        res.status(500).json({message:err.message})
-    }
+  // Token from cookies
+  if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
 
+  // Token from Authorization header
+  else if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  }
 
-}
+  // No token found
+  if (!token) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  try {
+    const verified = jwt.verify(token, process.env.secretekey);
+    req.user = verified;
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid/Expired Token" });
+  }
+};
+
 
 exports.authorizeRoles=(...roles)=>{
     console.log(roles)
@@ -25,7 +36,7 @@ exports.authorizeRoles=(...roles)=>{
         if(!req.user){
             return res.status(401).json({message:"please log in"})
         }
-        if(!roles.includes(req.user.usertype)){
+        if(!roles.includes(req.user.role)){
             return res.status(400).json({message:"access denied"})
         }      
         next()  

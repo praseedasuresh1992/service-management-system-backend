@@ -1,41 +1,39 @@
-const express=require('express')
-const app=express()
-require('dotenv').config()
-var cors = require('cors')
+const express = require('express');
+const app = express();
+require('dotenv').config();
+var cors = require('cors');
+const cookieParser = require("cookie-parser");  // ✅ ADD THIS
 
-const connectdb=require('./config/db')
-connectdb()
+const connectdb = require('./config/db');
+connectdb();
 
-const userroutes=require("./routes/userroutes")
-const providerroutes=require("./routes/providerroutes")
-const bookingroutes=require("./routes/booking_routes")
-const categoryroutes=require("./routes/category_routes")
-const complaintroutes=require("./routes/complaints_routes")
-const provideravailabiltyroutes=require("./routes/provider_availability_routes")
-const paymentroutes=require('./routes/payment_routes')
-const ratingroutes=require("./routes/ratingroutes")
-
+// CORS (must allow credentials)
 const corsOptions = {
-  origin: ['https://service-management-system-client.vercel.app','http://localhost:5173'], // must be exact frontend URL
-  credentials: true, // allow cookies, headers, etc.
+  origin: [
+    'https://transcendent-alpaca-adb26f.netlify.app/',
+    'http://localhost:5173'
+  ],
+  credentials: true,  // 🔥 VERY IMPORTANT
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
-app.use(cors(corsOptions))  
 
+app.use(cors(corsOptions));
+app.use(cookieParser());          // 🚀 NOW BACKEND CAN READ COOKIES
+app.use(express.json());
 
-app.use(express.json())
-app.get('/',(req,res)=>{res.send("Welcome")})
+// Routes
+app.get('/', (req, res) => { res.send("Welcome") });
 
-app.use('/',userroutes)
-app.use('/',providerroutes)
-app.use('/',bookingroutes)
-app.use('/',categoryroutes)
-app.use('/',complaintroutes)
-app.use("/",provideravailabiltyroutes)
-app.use('/',paymentroutes)
-app.use('/',ratingroutes)
+app.use('/', require("./routes/userroutes"));
+app.use('/', require("./routes/providerroutes"));
+app.use('/', require("./routes/booking_routes"));
+app.use('/', require("./routes/category_routes"));
+app.use('/', require("./routes/complaints_routes"));
+app.use('/', require("./routes/provider_availability_routes"));
+app.use('/', require('./routes/payment_routes'));
+app.use('/', require("./routes/ratingroutes"));
 
-app.listen(process.env.PORT,()=>{
-    console.log(`Listening at port ${process.env.PORT}`)
-})
+app.listen(process.env.PORT, () => {
+  console.log(`Listening at port ${process.env.PORT}`);
+});

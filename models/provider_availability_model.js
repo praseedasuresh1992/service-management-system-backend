@@ -1,22 +1,29 @@
-const mongoose = require('mongoose');
 
-const provider_availability_schema = new mongoose.Schema({
+const mongoose = require("mongoose");
 
-    provider_id: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "providers", 
-        required: true 
+const AvailabilitySchema = new mongoose.Schema({
+    date: {
+        type: String,   // Format: YYYY-MM-DD
+        required: true
     },
+    slot: {
+        type: String,
+        enum: ["day", "evening"],
+        required: true
+    }
+}, { _id: false });
 
-    availability: [
-        {
-            available_date: { type: Date, required: true },
-            available_time: { type: Date, required: true }
-        }
-    ]
+const ProviderAvailabilitySchema = new mongoose.Schema({
+    provider_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Provider",
+        required: true,
+        unique: true
+    },
+    availability: {
+        type: [AvailabilitySchema],
+        default: []
+    }
+});
 
-}, { timestamps: true });
-
-const provider_availability = mongoose.model('provider_availability', provider_availability_schema);
-
-module.exports = provider_availability;
+module.exports = mongoose.model("provider_availabilities", ProviderAvailabilitySchema);

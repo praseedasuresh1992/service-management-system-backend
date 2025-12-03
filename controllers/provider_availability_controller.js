@@ -1,36 +1,94 @@
-const ProviderAvailability = require("../models/provider_availability_model");
-
+const ProviderAvailability=require("../models/provider_availability_model")
 // ==========================
-// CREATE AVAILABILITY
+// CREATE OR UPDATE AVAILABILITY
 // ==========================
 
 exports.createAvailability = async (req, res) => {
     try {
         const { provider_id, availability } = req.body;
 
-        if (!provider_id ) {
-            return res.status(400).json({ 
-                message: "provider_id is required" 
-            });
-        }
-        if ( !availability || availability.length === 0) {
-            return res.status(400).json({ 
-                message: "provider is not available " 
+        // ==========================
+        // Basic validation
+        // ==========================
+        if (!provider_id) {
+            return res.status(400).json({
+                message: "provider_id is required"
             });
         }
 
-        const newAvailability = await ProviderAvailability.create({
-            provider_id,
-            availability
-        });
+        if (!availability || !Array.isArray(availability) || availability.length === 0) {
+            return res.status(400).json({
+                message: "Availability array is required"
+            });
+        }
 
-        res.status(201).json({
-            message: "Availability slots created successfully",
-            data: newAvailability
-        });
+        // ==========================
+        // Check for duplicates inside request itself
+        // ==========================
+        const uniqueCheck = new Set();
+        for (let item of availability) {
+            if (!item.date || !item.slot) {
+                return res.status(400).json({
+                    message: "Each availability entry must contain date and slot"
+                });
+            }
+
+            let key = `${item.date}-${item.slot}`;
+            if (uniqueCheck.has(key)) {
+                return res.status(400).json({
+                    message: `Duplicate slot found in request: ${item.date} - ${item.slot}`
+                });
+            }
+            uniqueCheck.add(key);
+        }
+
+        // ==========================
+        // Check existing availability for provider
+        // ==========================
+        let providerData = await ProviderAvailability.findOne({ provider_id });
+
+        if (providerData) {
+            // Provider already has availability → merge with new one
+            let existingList = providerData.availability;
+
+            // Check conflicts with existing data
+            for (let item of availability) {
+                let conflict = existingList.some(
+                    (e) => e.date === item.date && e.slot === item.slot
+                );
+
+                if (conflict) {
+                    return res.status(400).json({
+                        message: `Slot already exists for provider: ${item.date} - ${item.slot}`
+                    });
+                }
+            }
+
+            // Merge new availability slots
+            providerData.availability = [...existingList, ...availability];
+
+            await providerData.save();
+
+            return res.status(200).json({
+                message: "Availability updated successfully",
+                data: providerData
+            });
+
+        } else {
+            // Provider doesn't have availability record → create new
+            const newAvailability = await ProviderAvailability.create({
+                provider_id,
+                availability
+            });
+
+            return res.status(201).json({
+                message: "Availability slots created successfully",
+                data: newAvailability
+            });
+        }
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -90,3 +148,76 @@ exports.getProviderAvailabity = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// ==========================
+// DELETE AVAILABILITY SLOT
+// ==========================
+exports.deleteAvailabilitySlot = async (req, res) => {
+    try {
+        const { provider_id, date, slot } = req.body;
+
+        if (!provider_id || !date || !slot) {
+            return res.status(400).json({
+                message: "provider_id, date and slot are required"
+            });
+        }
+
+        const provider = await ProviderAvailability.findOne({ provider_id });
+
+        if (!provider) {
+            return res.status(404).json({ message: "Provider not found" });
+        }
+
+        const beforeCount = provider.availability.length;
+
+        provider.availability = provider.availability.filter(
+            (item) => !(item.date === date && item.slot === slot)
+        );
+
+        if (provider.availability.length === beforeCount) {
+            return res.status(400).json({ 
+                message: "No matching slot found to delete" 
+            });
+        }
+
+        await provider.save();
+
+        res.json({
+            message: "Availability slot removed successfully",
+            data: provider
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+// ==========================
+// FILTER PROVIDER BY AVAILABILITY
+// ==========================
+exports.filterProvidersByAvailability = async (req, res) => {
+    try {
+        const { needs } = req.body;
+
+        if (!needs || needs.length === 0) {
+            return res.status(400).json({ message: "needs array is required" });
+        }
+
+        // Find providers whose availability contains ALL date-slot pairs
+        const providers = await ProviderAvailability.find({
+            availability: {
+                $all: needs.map(item => ({
+                    $elemMatch: { date: item.date, slot: item.slot }
+                }))
+            }
+        }).populate("provider_id");
+
+        res.json({
+            message: "Providers fetched successfully",
+            count: providers.length,
+            data: providers
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+ 

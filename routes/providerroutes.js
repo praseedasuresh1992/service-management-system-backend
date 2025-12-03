@@ -13,6 +13,7 @@ router.post('/updateprovider',auth.authuser,providercontroller.updateMyProfile)
 router.post("/verifyprovider/:id",providercontroller.updateProviderStatus)
 
 router.get('/viewallproviders',providercontroller.getProviders)
+router.get('/getproviderBycategoryId/:id',providercontroller.providerProfileByCategoryId)
 router.get('/providerprofile/:id',providercontroller.providerProfile)
 router.get("/viewMyProviderProfile",auth.authuser,providercontroller.getmyprofile)
 

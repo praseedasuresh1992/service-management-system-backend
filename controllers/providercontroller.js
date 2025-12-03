@@ -16,8 +16,8 @@ exports.addProvider = async (req, res) => {
              contactno,
              service_category,
              available_location,
-              username, 
-              password } = req.body;
+             username, 
+             password } = req.body;
     const hashedpassword = await bcrypt.hash(password, 10);
  const newProvider=new providermodel({
     profile_image,
@@ -81,6 +81,58 @@ exports.providerProfile = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+// ===============================
+// VIEW PROVIDER BASED ON CATEGORY 
+// ================================
+exports.providerProfileByCategoryId = async (req, res) => {
+  try {
+    console.log("Category ID:", req.params.id);
+
+    const categoryId = req.params.id;
+    const { location } = req.query; // optional ?location=Kochi
+
+    // Base filters
+    let filters = {
+      service_category: categoryId,
+      verified: true,
+      status: "active",
+    };
+
+    // If location is provided → match provider.available_location (case-insensitive)
+    if (location) {
+      filters.available_location = { 
+        $regex: location,
+        $options: "i"
+      };
+    }
+
+    const providers = await providermodel
+      .find(filters)
+      .select("name email contactno available_location verified status service_category");
+
+    // No providers found
+    if (!providers || providers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No matching providers found for this category and/or location"
+      });
+    }
+
+    // Success
+    res.status(200).json({
+      success: true,
+      count: providers.length,
+      data:providers
+    });
+kk
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
 
 // ==========================
 // UPDATE Logged In PROVIDER
