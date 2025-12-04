@@ -38,7 +38,8 @@ exports.loginUser = async (req, res) => {
     }
 
     // Validate password
-   
+   console.log("curpwd",currentuser.password)
+   console.log("pwd",password)
     const ismatch = await bcrypt.compare(password, currentuser.password);
     if (!ismatch)
       

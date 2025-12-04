@@ -23,7 +23,7 @@ app.use(cookieParser());          // 🚀 NOW BACKEND CAN READ COOKIES
 app.use(express.json());
 
 // Routes
-app.get('/', (req, res) => { res.send("Welcome") });
+app.get('/', (req, res) => { res.send("Welcome to Service management system") });
 
 app.use('/', require("./routes/userroutes"));
 app.use('/', require("./routes/providerroutes"));
