@@ -10,7 +10,7 @@ connectdb();
 // CORS (must allow credentials)
 const corsOptions = {
   origin: [
-    'https://servicemanagementsystemclient.onrender.com/',
+    'https://servicemanagementsystemclient.onrender.com',
     'http://localhost:5173'
   ],
   credentials: true,  // 🔥 VERY IMPORTANT
