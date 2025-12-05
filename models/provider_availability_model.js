@@ -16,7 +16,7 @@ const AvailabilitySchema = new mongoose.Schema({
 const ProviderAvailabilitySchema = new mongoose.Schema({
     provider_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "provider",
+        ref: "providers",
         required: true,
         unique: true
     },

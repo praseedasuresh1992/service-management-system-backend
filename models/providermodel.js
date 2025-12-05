@@ -19,6 +19,6 @@ const providerschema=new mongoose.Schema({
 
 }, { timestamps: true })
 
-const provider=mongoose.model('provider',providerschema)
+const provider=mongoose.model('providers',providerschema)
 
 module.exports=provider
