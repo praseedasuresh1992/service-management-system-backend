@@ -2,6 +2,7 @@ const bookingmodel=require("../models/bookingmodel")
 
 exports.createBooking = async (req, res) => {
     try {
+        console.log("token from background",token)
         const {
             user_id,
             provider_id,
@@ -61,7 +62,7 @@ exports.getAllBookings = async (req, res) => {
     const bookings = await bookingmodel.find()
       .populate("user_id")
       .populate("provider_id")
-      .populate("category_id");
+      .populate("category_id")
 
     res.status(200).json({ success: true, data: bookings });
   } catch (error) {

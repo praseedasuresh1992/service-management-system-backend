@@ -4,6 +4,9 @@ require('dotenv').config();
 var cors = require('cors');
 const cookieParser = require("cookie-parser");  // ✅ ADD THIS
 
+app.set("trust proxy", 1); // 🔥 IMPORTANT FOR RENDER COOKIES
+
+
 const connectdb = require('./config/db');
 connectdb();
 
@@ -19,6 +22,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// app.options("*", cors(corsOptions));
 app.use(cookieParser());          // 🚀 NOW BACKEND CAN READ COOKIES
 app.use(express.json());
 

@@ -4,9 +4,6 @@ var jwt = require('jsonwebtoken');
 const usermodel = require('../models/usermodel');
 const providermodel=require("../models/providermodel")
 const adminmodel=require("../models/adminmodel")
-
-
-
 exports.loginUser = async (req, res) => {
   try {
     console.log('🟡 Login Body:', req.body);
@@ -56,11 +53,12 @@ exports.loginUser = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // Step 6 — Set cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
+      // 🔥 Set token in cookie
+    res.cookie("token", token, {
+      httpOnly: true,   // cannot be accessed by JS
+      secure: true,     // required in https (Render & Netlify)
+      sameSite: "None", // required when frontend & backend are different origins
+     
     });
 
     // Send response

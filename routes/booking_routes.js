@@ -5,7 +5,7 @@ const auth=require('../middleware/auth')
 const booking = require('../models/bookingmodel')
 
 
-router.post('/createbooking',bookingcontroller.createBooking)
+router.post('/createbooking',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.createBooking)
 router.get('/viewbookings',auth.authuser,bookingcontroller.getAllBookings)
 router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("providers","admin"),bookingcontroller.getFilteredBookings)
 
