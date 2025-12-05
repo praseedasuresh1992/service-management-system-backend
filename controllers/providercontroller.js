@@ -1,4 +1,6 @@
 const providermodel = require("../models/providermodel")
+const ProviderAvailability=require("../models/provider_availability_model")
+
 const bcrypt = require('bcryptjs');
 
 
@@ -84,52 +86,64 @@ exports.providerProfile = async (req, res) => {
 // ===============================
 // VIEW PROVIDER BASED ON CATEGORY 
 // ================================
-exports.providerProfileByCategoryId = async (req, res) => {
+exports.filterProviderforbooking = async (req, res) => {
   try {
-    console.log("Category ID:", req.params.id);
+    const { category_id, needs, location } = req.body;
 
-    const categoryId = req.params.id;
-    const { location } = req.query; // optional ?location=Kochi
-
-    // Base filters
-    let filters = {
-      service_category: categoryId,
-      verified: true,
-      status: "active",
-    };
-
-    // If location is provided → match provider.available_location (case-insensitive)
-    if (location) {
-      filters.available_location = { 
-        $regex: location,
-        $options: "i"
-      };
+    if (!category_id) {
+      return res.status(400).json({ message: "category_id is required" });
     }
 
-    const providers = await providermodel
+    if (!needs || !Array.isArray(needs) || needs.length === 0) {
+      return res.status(400).json({ message: "needs array is required" });
+    }
+
+    // Step 1: Find providers matching availability
+    const availabilityMatched = await ProviderAvailability.find({
+      availability: {
+        $all: needs.map(item => ({
+          $elemMatch: { date: item.date, slot: item.slot }
+        }))
+      }
+    }).populate("provider_id");
+
+    if (!availabilityMatched.length) {
+      return res.status(404).json({ message: "No providers found for availability" });
+    }
+
+    // Step 2: Extract provider_ids from availability
+    const providerIds = availabilityMatched.map(x => x.provider_id._id);
+
+    // Step 3: Apply category + verified + status + location
+    let filters = {
+      _id: { $in: providerIds },
+      service_category: category_id,
+      verified: true,
+      status: "active"
+    };
+
+    if (location) {
+      filters.available_location = { $regex: location, $options: "i" };
+    }
+
+    const finalProviders = await providermodel
       .find(filters)
       .select("name email contactno available_location verified status service_category");
 
-    // No providers found
-    if (!providers || providers.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No matching providers found for this category and/or location"
+    if (finalProviders.length === 0) {
+      return res.status(404).json({ 
+        message: "No providers match all filters (category + verification + availability + location)" 
       });
     }
 
-    // Success
     res.status(200).json({
       success: true,
-      count: providers.length,
-      data:providers
+      count: finalProviders.length,
+      data: finalProviders
     });
-kk
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
