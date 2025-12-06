@@ -22,7 +22,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
- app.options("*", cors(corsOptions));
 app.use(cookieParser());          // 🚀 NOW BACKEND CAN READ COOKIES
 app.use(express.json());
 
