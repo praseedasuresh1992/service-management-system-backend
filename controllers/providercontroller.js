@@ -70,19 +70,23 @@ exports.getmyprofile=async (req,res)=>{
   }
 
 
-// ==========================
-// GET SINGLE PROVIDER BY ID
-// ==========================
-exports.providerProfile = async (req, res) => {
+// GET LOGGED-IN PROVIDER PROFILE
+exports.viewMyProviderProfile = async (req, res) => {
   try {
-    const provider = await providermodel.findById(req.params.id);
-    if (!provider) return res.status(404).json({ message: "Provider not found" });
+    const providerId = req.user.id; // from auth middleware
 
-    res.status(200).json(provider);
+    const provider = await providermodel.findById(providerId)
+      .populate("service_category");
+
+    if (!provider)
+      return res.status(404).json({ message: "Provider not found" });
+
+    res.status(200).json({ data: provider }); // frontend expects data:
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 // ===============================
 // VIEW PROVIDER BASED ON CATEGORY 
 // ================================
