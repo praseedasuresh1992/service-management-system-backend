@@ -15,7 +15,7 @@ router.post("/verifyprovider/:id",providercontroller.updateProviderStatus)
 router.get('/viewallproviders',providercontroller.getProviders)
 router.post('/filterProviderforbooking',providercontroller.filterProviderforbooking )
 router.get('/providerprofile/:id',providercontroller.providerProfile)
-router.get("/viewMyProviderProfile",auth.authuser,auth.authorizeRoles("provider"),providercontroller.viewMyProviderProfile )
+router.get("/viewMyProviderProfile/:id",auth.authuser,auth.authorizeRoles("provider"),providercontroller.viewMyProviderProfile )
 
 router.delete('/deleteprovider/:id',providercontroller.deleteProvider)
 
