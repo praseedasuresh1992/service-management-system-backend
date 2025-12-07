@@ -80,6 +80,8 @@ exports.viewMyProviderProfile = async (req, res) => {
 
     if (!provider)
       return res.status(404).json({ message: "Provider not found" });
+if (is_group !== undefined) updateData.is_group = is_group;
+if (members !== undefined) updateData.members = members;
 
     res.status(200).json({ data: provider }); // frontend expects data:
   } catch (err) {
