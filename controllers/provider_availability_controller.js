@@ -1,18 +1,21 @@
 const ProviderAvailability=require("../models/provider_availability_model")
-// ==========================
-// CREATE OR UPDATE AVAILABILITY
-// ==========================
+
+// =======================================
+// CREATE OR UPDATE PROVIDER AVAILABILITY
+// =======================================
 
 exports.createAvailability = async (req, res) => {
     try {
-        const { provider_id, availability } = req.body;
+        // provider_id comes from cookie-auth middleware
+        const provider_id = req.user?.id;
+        const { availability } = req.body;
 
         // ==========================
-        // Basic validation
+        // Basic validations
         // ==========================
         if (!provider_id) {
-            return res.status(400).json({
-                message: "provider_id is required"
+            return res.status(401).json({
+                message: "Unauthorized: Provider ID not found in cookie"
             });
         }
 
@@ -23,9 +26,10 @@ exports.createAvailability = async (req, res) => {
         }
 
         // ==========================
-        // Check for duplicates inside request itself
+        // Reject duplicates INSIDE request itself
         // ==========================
-        const uniqueCheck = new Set();
+        const requestCheck = new Set();
+
         for (let item of availability) {
             if (!item.date || !item.slot) {
                 return res.status(400).json({
@@ -33,64 +37,72 @@ exports.createAvailability = async (req, res) => {
                 });
             }
 
-            let key = `${item.date}-${item.slot}`;
-            if (uniqueCheck.has(key)) {
+            const key = `${item.date}-${item.slot}`;
+
+            if (requestCheck.has(key)) {
                 return res.status(400).json({
-                    message: `Duplicate slot found in request: ${item.date} - ${item.slot}`
+                    message: `Duplicate slot in request: ${item.date} - ${item.slot}`
                 });
             }
-            uniqueCheck.add(key);
+
+            requestCheck.add(key);
         }
 
         // ==========================
-        // Check existing availability for provider
+        // Find existing availability
         // ==========================
-        let providerData = await ProviderAvailability.findOne({ provider_id });
+        let existing = await ProviderAvailability.findOne({ provider_id });
 
-        if (providerData) {
-            // Provider already has availability → merge with new one
-            let existingList = providerData.availability;
-
-            // Check conflicts with existing data
-            for (let item of availability) {
-                let conflict = existingList.some(
-                    (e) => e.date === item.date && e.slot === item.slot
-                );
-
-                if (conflict) {
-                    return res.status(400).json({
-                        message: `Slot already exists for provider: ${item.date} - ${item.slot}`
-                    });
-                }
-            }
-
-            // Merge new availability slots
-            providerData.availability = [...existingList, ...availability];
-
-            await providerData.save();
-
-            return res.status(200).json({
-                message: "Availability updated successfully",
-                data: providerData
-            });
-
-        } else {
-            // Provider doesn't have availability record → create new
-            const newAvailability = await ProviderAvailability.create({
+        if (!existing) {
+            // ==========================
+            // Create availability for first time
+            // ==========================
+            const newData = new ProviderAvailability({
                 provider_id,
                 availability
             });
 
+            await newData.save();
+
             return res.status(201).json({
-                message: "Availability slots created successfully",
-                data: newAvailability
+                message: "Availability created successfully",
+                data: newData
             });
         }
 
+        // ==========================
+        // Merge existing + new availability
+        // ==========================
+        const merged = [...existing.availability];
+
+        // Add new items but avoid duplicates in DB
+        availability.forEach(item => {
+            const exists = merged.some(
+                m => m.date === item.date && m.slot === item.slot
+            );
+
+            if (!exists) {
+                merged.push(item);
+            }
+        });
+
+        existing.availability = merged;
+        await existing.save();
+
+        return res.status(200).json({
+            message: "Availability updated successfully",
+            data: existing
+        });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Availability Error:", error);
+        return res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
     }
 };
+
 
 // ==========================
 // UPDATE AVAILABILITY BY ID

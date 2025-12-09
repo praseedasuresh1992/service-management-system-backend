@@ -10,7 +10,7 @@ const providerschema=new mongoose.Schema({
     address:{type:String,required:true},
     contactno:{type:String,required:true},
     service_category:{type:mongoose.Schema.Types.ObjectId,ref:"service_category", required :true},
-    available_location:{type:String,required:true},
+    available_location:{type:[String],required:true},
     username:{type:String,required:true,unique:true},
     password:{type:String,required:true},
     status:{type:String,enum:["active","blocked","pending"],default:"pending"},

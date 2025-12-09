@@ -7,7 +7,7 @@ const AvailabilitySchema = new mongoose.Schema({
         required: true
     },
     slot: {
-        type: String,
+        type: [String],
         enum: ["day", "evening"],
         required: true
     }

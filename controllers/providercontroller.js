@@ -52,22 +52,7 @@ exports.getProviders = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-//================================
-// self view of Provider Profile
-//================================
 
-exports.getmyprofile=async (req,res)=>{
-  try{
-    const providerId = req.user.id;  
-    const provider = await providermodel.findById(providerId);
-    if (!provider) return res.status(404).json({ message: "Provider not found" });
-
-    res.status(200).json(provider);
-  }
-    catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-  }
 
 
 // GET LOGGED-IN PROVIDER PROFILE
