@@ -20,11 +20,14 @@ exports.addProvider = async (req, res) => {
       service_category,
       available_location,
       username,
-      password } = req.body;
+      password 
+    } = req.body;
+
     const hashedpassword = await bcrypt.hash(password, 10);
-    // Upload profile image
+
+    // Profile image
     let profileData = {};
-    if (req.file) {
+    if (req.files?.profile_image?.length > 0) {
       const file = req.files.profile_image[0];
       const upload = await cloudinary.uploader.upload(file.path, {
         folder: "mern_profiles",
@@ -35,7 +38,7 @@ exports.addProvider = async (req, res) => {
       };
     }
 
-    // Upload multiple documents
+    // Multiple documents
     let documents = [];
     if (req.files?.verification_document) {
       for (const doc of req.files.verification_document) {
@@ -50,6 +53,14 @@ exports.addProvider = async (req, res) => {
       }
     }
 
+    // Parse available_location as array
+    let locations = [];
+    try {
+      locations = JSON.parse(available_location);
+    } catch {
+      locations = [available_location];
+    }
+
     const newProvider = new providermodel({
       profile_image: profileData,
       name,
@@ -59,17 +70,18 @@ exports.addProvider = async (req, res) => {
       address,
       contactno,
       service_category,
-      available_location,
-      verification_document:documents,
+      available_location: locations,
+      verification_document: documents,
       username,
-      password: hashedpassword
-    })
+      password: hashedpassword,
+    });
+
     await newProvider.save();
     res.status(201).json(newProvider);
   } catch (err) {
     console.error("ADD PROVIDER ERROR:", err);
-  res.status(400).json({ error: err.message, details: err });
-}
+    res.status(400).json({ error: err.message, details: err });
+  }
 };
 
 // ==========================
