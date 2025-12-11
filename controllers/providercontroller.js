@@ -22,6 +22,8 @@ exports.addProvider = async (req, res) => {
       username,
       password 
     } = req.body;
+console.log("REQ.BODY:", req.body);
+console.log("REQ.FILES:", req.files);
 
     const hashedpassword = await bcrypt.hash(password, 10);
 
