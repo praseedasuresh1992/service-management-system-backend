@@ -1,6 +1,6 @@
 const providermodel = require("../models/providermodel")
 const ProviderAvailability = require("../models/provider_availability_model")
-const { cloudinary } = require("../config/cloudinary")
+const cloudinary = require("../config/cloudinary")
 
 const bcrypt = require('bcryptjs');
 
