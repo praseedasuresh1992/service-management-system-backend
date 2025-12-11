@@ -24,7 +24,7 @@ exports.addProvider = async (req, res) => {
     const hashedpassword = await bcrypt.hash(password, 10);
     // Upload profile image
     let profileData = {};
-    if (req.files?.profile_image) {
+    if (req.file) {
       const file = req.files.profile_image[0];
       const upload = await cloudinary.uploader.upload(file.path, {
         folder: "mern_profiles",
