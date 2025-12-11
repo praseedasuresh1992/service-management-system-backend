@@ -8,6 +8,6 @@ router.post('/registeruser', usercontroller.createuser)
 router.post('/login', logincontroller.loginUser)
 router.delete('/deleteuser/:id',auth.authuser,auth.authorizeRoles('admin'), usercontroller.deleteuser)
 router.get('/profile',usercontroller.viewuser)
-router.get('/logout', auth.authuser, logincontroller.logoutuser)
+router.post('/logout',  logincontroller.logoutuser)
 
 module.exports = router

@@ -80,8 +80,14 @@ exports.loginUser = async (req, res) => {
 };
 
 
-exports.logoutuser=(req,res)=>{
-    res.clearCookie("token")
-    console.log(res.cookie.token)
-    res.status(200).json({message:`Logout successfull`})
-}
+exports.logoutuser = (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        path: "/",     // IMPORTANT: must match original cookie
+        
+    });
+
+    return res.status(200).json({ message: "Logout successful" });
+};
