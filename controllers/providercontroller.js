@@ -67,8 +67,9 @@ exports.addProvider = async (req, res) => {
     await newProvider.save();
     res.status(201).json(newProvider);
   } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    console.error("ADD PROVIDER ERROR:", err);
+  res.status(400).json({ error: err.message, details: err });
+}
 };
 
 // ==========================
