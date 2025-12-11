@@ -2,7 +2,8 @@ const mongoose=require('mongoose')
 
 const providerschema=new mongoose.Schema({
 
-    profile_image:{type:String,required:true},
+    profile_image:{url:{type:String },
+     public_id: { type: String }},//cloudinary URL
     name:{type:String,required:true},
     email:{type:String,required:true,unique:true},
     is_group:{type:Boolean,default:false},
@@ -11,6 +12,12 @@ const providerschema=new mongoose.Schema({
     contactno:{type:String,required:true},
     service_category:{type:mongoose.Schema.Types.ObjectId,ref:"service_category", required :true},
     available_location:{type:[String],required:true},
+    verification_document: [
+    {
+        url: String,
+        public_id: String
+    }
+    ],
     username:{type:String,required:true,unique:true},
     password:{type:String,required:true},
     status:{type:String,enum:["active","blocked","pending"],default:"pending"},

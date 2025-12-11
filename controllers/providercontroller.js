@@ -1,5 +1,6 @@
 const providermodel = require("../models/providermodel")
-const ProviderAvailability=require("../models/provider_availability_model")
+const ProviderAvailability = require("../models/provider_availability_model")
+const { cloudinary } = require("../config/cloudinary")
 
 const bcrypt = require('bcryptjs');
 
@@ -9,31 +10,60 @@ const bcrypt = require('bcryptjs');
 // ==========================
 exports.addProvider = async (req, res) => {
   try {
-        const {profile_image,
-             name,
-             email,
-              is_group,
-              members,
-             address,
-             contactno,
-             service_category,
-             available_location,
-             username, 
-             password } = req.body;
+    const { 
+      name,
+      email,
+      is_group,
+      members,
+      address,
+      contactno,
+      service_category,
+      available_location,
+      username,
+      password } = req.body;
     const hashedpassword = await bcrypt.hash(password, 10);
- const newProvider=new providermodel({
-    profile_image,
-             name,
-             email,
-              is_group,
-              members,
-             address,
-             contactno,
-             service_category,
-             available_location,
-              username, 
-              password :hashedpassword
- })
+    // Upload profile image
+    let profileData = {};
+    if (req.files?.profile_image) {
+      const file = req.files.profile_image[0];
+      const upload = await cloudinary.uploader.upload(file.path, {
+        folder: "mern_profiles",
+      });
+      profileData = {
+        url: upload.secure_url,
+        public_id: upload.public_id,
+      };
+    }
+
+    // Upload multiple documents
+    let documents = [];
+    if (req.files?.verification_document) {
+      for (const doc of req.files.verification_document) {
+        const upload = await cloudinary.uploader.upload(doc.path, {
+          folder: "mern_documents",
+          resource_type: "auto",
+        });
+        documents.push({
+          url: upload.secure_url,
+          public_id: upload.public_id,
+        });
+      }
+    }
+
+    const newProvider = new providermodel({
+      profile_image: profileData,
+      name,
+      email,
+      is_group,
+      members,
+      address,
+      contactno,
+      service_category,
+      available_location,
+      verification_document:documents,
+      username,
+      password: hashedpassword
+    })
     await newProvider.save();
     res.status(201).json(newProvider);
   } catch (err) {
@@ -120,8 +150,8 @@ exports.filterProviderforbooking = async (req, res) => {
       .select("name email contactno available_location verified status service_category");
 
     if (finalProviders.length === 0) {
-      return res.status(404).json({ 
-        message: "No providers match all filters (category + verification + availability + location)" 
+      return res.status(404).json({
+        message: "No providers match all filters (category + verification + availability + location)"
       });
     }
 
@@ -141,112 +171,181 @@ exports.filterProviderforbooking = async (req, res) => {
 // UPDATE Logged In PROVIDER
 // ==========================
 exports.updateMyProfile = async (req, res) => {
-    try {
-        const providerId = req.user.id;   // ID from JWT middleware
-        
-        const {
-            profile_image,
-            name,
-            email,
-            is_group,
-            members,
-            address,
-            contactno,
-            service_category,
-            available_location,
-            username,
-            password
-        } = req.body;
-
-        const updateData = {};
-
-        if (profile_image) updateData.profile_image = profile_image;
-        if (name) updateData.name = name;
-        if (email) updateData.email = email;
-        if (is_group) updateData.is_group = is_group;
-        if (members) updateData.members = members;
-        if (address) updateData.address = address;
-        if (contactno) updateData.contactno = contactno;
-        if (service_category) updateData.service_category = service_category;
-        if (available_location) updateData.available_location = available_location;
-        if (username) updateData.username = username;
-        if (password) updateData.password = password;
-
-
-        
-
-        const updatedProvider = await providermodel.findByIdAndUpdate(
-            providerId,
-            updateData,
-            { new: true }
-        );
-
-        if (!updatedProvider) {
-            return res.status(404).json({ message: "Provider not found" });
-        }
-
-        return res.status(200).json({
-            message: "Profile updated successfully",
-            provider: updatedProvider,
-        });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Server error" });
-    }
-};
-
-
-// Update provider status and verification
-exports.updateProviderStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status, verified } = req.body;
-
-        // Validate status
-        const allowedStatus = ["active", "blocked", "pending"];
-        if (status && !allowedStatus.includes(status)) {
-            return res.status(400).json({ message: "Invalid status value" });
-        }
-
-        const updateData = {};
-        if (status) updateData.status = status;
-        if (typeof verified === "boolean") updateData.verified = verified;
-
-        const verifiedProvider = await providermodel.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        );
-
-        if (!verifiedProvider) {
-            return res.status(404).json({ message: "Provider not found" });
-        }
-
-        return res.status(200).json({
-            message: "Provider updated successfully",
-            provider: verifiedProvider,
-        });
-
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Server error" });
-    }
-};
-
-// ==========================
-// DELETE PROVIDER
-// ==========================
-exports.deleteProvider = async (req, res) => {
   try {
-    console.log("delete")
-    const deletedProvider = await providermodel.findByIdAndDelete(req.params.id);
+    const providerId = req.user.id;
 
-    if (!deletedProvider)
+    const provider = await providermodel.findById(providerId);
+    if (!provider) {
       return res.status(404).json({ message: "Provider not found" });
+    }
 
-    res.status(200).json({ message: "Provider deleted successfully" });
+    const {
+      name,
+      email,
+      is_group,
+      members,
+      address,
+      contactno,
+      service_category,
+      available_location,
+      username,
+      password
+    } = req.body;
+
+    const updateData = {};
+
+    // ---------------------------
+    // BASIC FIELDS UPDATE
+    // ---------------------------
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (is_group !== undefined) updateData.is_group = is_group;
+    if (members) updateData.members = members;
+    if (address) updateData.address = address;
+    if (contactno) updateData.contactno = contactno;
+    if (service_category) updateData.service_category = service_category;
+    if (available_location) updateData.available_location = available_location;
+    if (username) updateData.username = username;
+    if (password) updateData.password = password;
+
+    // ---------------------------
+    // PROFILE IMAGE UPDATE
+    // ---------------------------
+    if (req.file) {  // profile image field (uploadProfile)
+      // delete old image from cloudinary
+      if (provider.profile_image) {
+        const publicId = provider.profile_image.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      updateData.profile_image = req.file.path;  // Cloudinary URL
+    }
+
+    // ---------------------------
+    // DOCUMENTS UPDATE
+    // ---------------------------
+    if (req.files && req.files.length > 0) {
+      const docs = req.files.map((f) => f.path);  // Only URLs needed
+
+      // push new documents into array
+      updateData.verification_document = [
+        ...provider.verification_document,
+        ...docs,
+      ];
+    }
+
+    // ---------------------------
+    // SAVE UPDATED PROVIDER
+    // ---------------------------
+    const updatedProvider = await providermodel.findByIdAndUpdate(
+      providerId,
+      updateData,
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      provider: updatedProvider,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+// ================================================
+// To delete Profile Image
+// ================================================
+
+exports.deleteProfileImage = async (req, res) => {
+  try {
+    const providerId = req.user.id;
+    const provider = await providermodel.findById(providerId);
+
+    if (!provider.profile_image.public_id)
+      return res.status(404).json({ message: "No image found" });
+
+    await cloudinary.uploader.destroy(provider.profile_image.public_id);
+
+    provider.profile_image = { url: "", public_id: "" };
+    await provider.save();
+
+    res.json({ message: "Profile image deleted" });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+// ================================================
+// Delete a Uploaded Document
+// ================================================
+exports.deleteDocument = async (req, res) => {
+  try {
+    const providerId = req.user.id;
+    const { docId } = req.params;  // document _id from frontend
+
+    const provider = await providermodel.findById(providerId);
+    if (!provider) return res.status(404).json({ message: "Provider not found" });
+
+    const document = provider.documents.id(docId);
+
+    if (!document)
+      return res.status(404).json({ message: "Document not found" });
+
+    // Delete from Cloudinary
+    if (document.public_id) {
+      await cloudinary.uploader.destroy(document.public_id);
+    }
+
+    // Remove from MongoDB
+    provider.documents.pull(docId);
+    await provider.save();
+
+    res.json({ message: "Document deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
+// Update provider status and verification
+exports.updateProviderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, verified } = req.body;
+
+    // Validate status
+    const allowedStatus = ["active", "blocked", "pending"];
+    if (status && !allowedStatus.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (typeof verified === "boolean") updateData.verified = verified;
+
+    const verifiedProvider = await providermodel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!verifiedProvider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    return res.status(200).json({
+      message: "Provider updated successfully",
+      provider: verifiedProvider,
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
