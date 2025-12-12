@@ -58,7 +58,7 @@ exports.loginUser = async (req, res) => {
       httpOnly: true,   // cannot be accessed by JS
       secure: true,     // required in https (Render & Netlify)
       sameSite: "None", // required when frontend & backend are different origins
-     
+      path: "/",
     });
 
     // Send response
@@ -86,7 +86,7 @@ exports.logoutuser = (req, res) => {
         secure: true,
         sameSite: "none",
         path: "/",     // IMPORTANT: must match original cookie
-        
+
     });
 
     return res.status(200).json({ message: "Logout successful" });

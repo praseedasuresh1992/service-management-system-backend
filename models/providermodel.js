@@ -9,7 +9,7 @@ const providerschema=new mongoose.Schema({
     is_group:{type:Boolean,default:false},
     members:{type:Number,default:1},
     address:{type:String,required:true},
-    contactno:{type:String,required:true},
+    contactno:{type:String,required:true,match: /^[0-9]{10}$/},
     service_category:{type:mongoose.Schema.Types.ObjectId,ref:"service_category", required :true},
     available_location:{type:[String],required:true},
     verification_document: [
@@ -19,7 +19,7 @@ const providerschema=new mongoose.Schema({
     }
     ],
     username:{type:String,required:true,unique:true},
-    password:{type:String,required:true},
+    password:{type:String,required:true,select: false},
     status:{type:String,enum:["active","blocked","pending"],default:"pending"},
     verified:{type:Boolean,default:false},
     role:{type:String,default:"provider"}

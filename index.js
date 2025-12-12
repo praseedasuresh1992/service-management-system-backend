@@ -30,6 +30,7 @@ app.get('/', (req, res) => { res.send("Welcome to Service management system") })
 
 app.use('/', require("./routes/userroutes"));
 app.use('/', require("./routes/providerroutes"));
+app.use('/', require("./routes/admin_routes"));
 app.use('/', require("./routes/booking_routes"));
 app.use('/', require("./routes/category_routes"));
 app.use('/', require("./routes/complaints_routes"));
