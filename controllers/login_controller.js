@@ -16,17 +16,17 @@ exports.loginUser = async (req, res) => {
         .json({ message: 'Username and password required' });
 
     // Step 1 — Check in usermodel
-    let currentuser = await usermodel.findOne({ username });
+    let currentuser = await usermodel.findOne({ username }).select("+password");
     console.log("found",currentuser)
     if(!currentuser)
     {
         console.log("not in user model");
-        currentuser = await providermodel.findOne({ username });
+        currentuser = await providermodel.findOne({ username }).select("+password");
     }
      if(!currentuser)
     {
         console.log("not in user and provider model");
-        currentuser = await adminmodel.findOne({ username });
+        currentuser = await adminmodel.findOne({ username }).select("+password");
     }
 
     if (!currentuser) {

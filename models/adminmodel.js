@@ -6,7 +6,7 @@ const adminschema=new mongoose.Schema({
     email:{type:String,required:true,unique: true, lowercase: true, trim: true},
     contactno:{type:String,required:true,match: /^[0-9]{10}$/},
     username:{type:String,required:true,unique:true},
-    password:{type:String,required:true,select: false},
+    password:{type:String,required:true,},
     role:{type:String, enum: ["admin"],default:"admin"}
 }, { timestamps: true })
 

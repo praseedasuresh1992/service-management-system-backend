@@ -19,7 +19,7 @@ const providerschema=new mongoose.Schema({
     }
     ],
     username:{type:String,required:true,unique:true},
-    password:{type:String,required:true,select: false},
+    password:{type:String,required:true},
     status:{type:String,enum:["active","blocked","pending"],default:"pending"},
     verified:{type:Boolean,default:false},
     role:{type:String,default:"provider"}
