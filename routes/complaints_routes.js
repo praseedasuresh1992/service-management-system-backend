@@ -12,7 +12,7 @@ router.patch(
   complaintcontroller.updateComplaintStatus
 );
 
-router.get('/viewcomplaintsById',auth.authuser,auth.authorizeRoles("admin"),complaintcontroller.getComplaintsByUser)
+router.get('/viewcomplaintsById/:id',auth.authuser,auth.authorizeRoles("admin"),complaintcontroller.getComplaintsByUser)
 router.get('/viewAllcomplaints',auth.authuser,auth.authorizeRoles("admin"),complaintcontroller.getAllComplaints)
 
 
