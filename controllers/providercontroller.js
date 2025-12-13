@@ -91,7 +91,7 @@ console.log("REQ.FILES:", req.files);
 // ==========================
 exports.getProviders = async (req, res) => {
   try {
-    const providers = await providermodel.find();
+    const providers = await providermodel.find().select("-password").populate("service_category");
     res.status(200).json(providers);
   } catch (err) {
     res.status(500).json({ error: err.message });

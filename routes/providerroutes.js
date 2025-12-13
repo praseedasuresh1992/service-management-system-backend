@@ -41,7 +41,7 @@ router.delete(
   providercontroller.deleteDocument
 );
 
-router.post("/verifyprovider/:id",providercontroller.updateProviderStatus)
+router.put("/verifyprovider/:id",auth.authuser,auth.authorizeRoles,providercontroller.updateProviderStatus)
 
 router.get('/viewallproviders',providercontroller.getProviders)
 router.post('/filterProviderforbooking',providercontroller.filterProviderforbooking )

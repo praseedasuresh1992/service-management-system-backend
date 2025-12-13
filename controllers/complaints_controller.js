@@ -50,9 +50,9 @@ exports.getAllComplaints = async (req, res) => {
 
 
 // ===============================
-// VIEW COMPLAINTS BY PROVIDER ID
+// VIEW COMPLAINTS BY  ID
 // ===============================
-exports.getComplaintsByProvider = async (req, res) => {
+exports.getComplaintsById = async (req, res) => {
     try {
         const { provider_id } = req.params;
 
@@ -71,62 +71,44 @@ exports.getComplaintsByProvider = async (req, res) => {
 };
 
 
-// ===============================
-// VIEW COMPLAINTS BY USER ID
-// ===============================
-exports.getComplaintsByUser = async (req, res) => {
-    try {
-        const { user_id } = req.params;
-
-        const complaints = await Complaint.find({ user_id })
-            .populate("user_id")
-            .populate("provider_id");
-
-        return res.status(200).json({
-            message: "Complaints for user fetched successfully",
-            data: complaints
-        });
-
-    } catch (error) {
-        return res.status(500).json({ message: "Server Error", error });
-    }
-};
-
 
 // ===============================
-// UPDATE COMPLAINT STATUS (pending → resolved/rejected)
+// UPDATE COMPLAINT STATUS
 // ===============================
 exports.updateComplaintStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-        if (!["pending", "resolved", "rejected"].includes(status)) {
-            return res.status(400).json({ message: "Invalid status" });
-        }
-
-        let updateData = { status };
-
-        if (status === "resolved") {
-            updateData.resolvedAt = new Date();
-        }
-
-        const complaint = await Complaint.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        );
-
-        if (!complaint) {
-            return res.status(404).json({ message: "Complaint not found" });
-        }
-
-        return res.status(200).json({
-            message: "Complaint status updated successfully",
-            data: complaint
-        });
-
-    } catch (error) {
-        return res.status(500).json({ message: "Server Error", error });
+    if (!["pending", "resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
     }
+
+    const updateData = { status };
+
+    if (status === "resolved") {
+      updateData.resolvedAt = new Date();
+    } else {
+      updateData.resolvedAt = null; // ✅ important
+    }
+
+    const complaint = await Complaint.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    return res.status(200).json({
+      message: "Complaint status updated successfully",
+      data: complaint
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server Error" });
+  }
 };
