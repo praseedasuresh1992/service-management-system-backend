@@ -5,7 +5,7 @@ const auth=require('../middleware/auth')
 
 
 router.post('/addcomplaints',auth.authuser,auth.authorizeRoles("user","provider"),complaintcontroller.createComplaint)
-router.patch(
+router.put(
   "/complaints/:id/status",
   auth.authuser,
   auth.authorizeRoles("admin"),
