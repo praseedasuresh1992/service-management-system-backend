@@ -49,25 +49,22 @@ exports.getAllComplaints = async (req, res) => {
 };
 
 
-// ===============================
-// VIEW COMPLAINTS BY  ID
-// ===============================
 exports.getComplaintsById = async (req, res) => {
-    try {
-        const { provider_id } = req.params;
+  try {
+    const { id: provider_id } = req.params;
 
-        const complaints = await Complaint.find({ provider_id })
-            .populate("user_id")
-            .populate("provider_id");
+    const complaints = await Complaint.find({ provider_id })
+      .populate("user_id")
+      .populate("provider_id");
 
-        return res.status(200).json({
-            message: "Complaints for provider fetched successfully",
-            data: complaints
-        });
+    return res.status(200).json({
+      message: "Complaints for provider fetched successfully",
+      data: complaints
+    });
 
-    } catch (error) {
-        return res.status(500).json({ message: "Server Error", error });
-    }
+  } catch (error) {
+    return res.status(500).json({ message: "Server Error", error });
+  }
 };
 
 

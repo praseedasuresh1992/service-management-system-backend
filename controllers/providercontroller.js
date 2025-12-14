@@ -46,7 +46,7 @@ console.log("REQ.FILES:", req.files);
       for (const doc of req.files.verification_document) {
         const upload = await cloudinary.uploader.upload(doc.path, {
           folder: "mern_documents",
-          resource_type: "auto",
+          resource_type: "raw",
         });
         documents.push({
           url: upload.secure_url,

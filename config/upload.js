@@ -1,10 +1,13 @@
 const multer = require("multer");
-const path = require("path");
 
 const storage = multer.diskStorage({});
 
 const fileFilter = (req, file, cb) => {
-  cb(null, true);
+  if (file.mimetype === "application/pdf") {
+    cb(null, true);
+  } else {
+    cb(new Error("Only PDF files allowed"), false);
+  }
 };
 
 module.exports = multer({ storage, fileFilter });
