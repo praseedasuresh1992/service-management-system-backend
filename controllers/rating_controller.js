@@ -1,63 +1,96 @@
-const Comment = require('../models/rating_model');
+const Rating = require("../models/rating_model");
 
 // ===============================
-// CREATE COMMENT
+// CREATE RATING & FEEDBACK
 // ===============================
-exports.createComment = async (req, res) => {
+exports.createRating = async (req, res) => {
   try {
-    const comment = await Comment.create(req.body);
+    const user_id = req.user.id;
+    const { booking_id, provider_id, category_id, rating, feedback } = req.body;
+
+    // prevent duplicate rating
+    const existing = await Rating.findOne({ booking_id });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Feedback already submitted for this booking"
+      });
+    }
+
+    const newRating = await Rating.create({
+      booking_id,
+      user_id,
+      provider_id,
+      category_id,
+      rating,
+      feedback
+    });
 
     res.status(201).json({
       success: true,
-      message: "Comment added successfully",
-      data: comment
+      message: "Rating submitted successfully",
+      data: newRating
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-
 // ===============================
-// GET ALL COMMENTS
+// GET RATINGS BY PROVIDER
 // ===============================
-exports.getAllComments = async (req, res) => {
+exports.getRatingsByProvider = async (req, res) => {
   try {
-    const comments = await Comment.find()
-      .populate("user_id")
-      .populate("provider_id")
-      .populate("category_id");
+    const { provider_id } = req.params;
+
+    const ratings = await Rating.find({ provider_id })
+      .populate("user_id", "name")
+      .populate("category_id", "category_name")
+      .sort({ createdAt: -1 });
+
+    // average rating
+    const avgRating =
+      ratings.reduce((sum, r) => sum + r.rating, 0) / (ratings.length || 1);
 
     res.status(200).json({
       success: true,
-      count: comments.length,
-      data: comments
+      averageRating: avgRating.toFixed(1),
+      totalReviews: ratings.length,
+      data: ratings
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-
 // ===============================
-// GET COMMENT BY ID
+// GET ALL RATINGS (ADMIN)
 // ===============================
-exports.getCommentById = async (req, res) => {
+exports.getAllRatings = async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.id)
-      .populate("user_id")
-      .populate("provider_id")
-      .populate("category_id");
+    const ratings = await Rating.find()
+      .populate("user_id", "name")
+      .populate("provider_id", "name")
+      .populate("category_id", "category_name");
 
-    if (!comment)
-      return res.status(404).json({ success: false, message: "Comment not found" });
-
-    res.status(200).json({ success: true, data: comment });
+    res.status(200).json({
+      success: true,
+      count: ratings.length,
+      data: ratings
+    });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
-

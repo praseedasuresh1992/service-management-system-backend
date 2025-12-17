@@ -44,7 +44,7 @@ router.delete(
 router.put("/verifyprovider/:id",auth.authuser,auth.authorizeRoles("admin"),providercontroller.updateProviderStatus)
 
 router.get('/viewallproviders',auth.authuser,auth.authorizeRoles("admin"),providercontroller.getProviders)
-router.post('/filterProviderforbooking',providercontroller.filterProviderforbooking )
+router.post('/filterProviderforbooking',auth.authuser,auth.authorizeRoles("user"),providercontroller.filterProviderforbooking )
 router.get("/viewMyProviderProfile",auth.authuser,auth.authorizeRoles("provider"),providercontroller.viewMyProviderProfile )
 
 

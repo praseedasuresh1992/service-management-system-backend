@@ -1,18 +1,68 @@
-const mongoose=require('mongoose')
+const mongoose = require("mongoose");
 
-const bookingschema=new mongoose.Schema({
+const bookingSchema = new mongoose.Schema(
+  {
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
 
-    user_id:{type:mongoose.Schema.Types.ObjectId,ref:"users",required:true},
-    provider_id:{type:mongoose.Schema.Types.ObjectId,ref:"providers",required:true},
-    category_id:{type:mongoose.Schema.Types.ObjectId,ref:"service_category",required:true},
-    start_datetime: {type: Date,required: true},
-    end_datetime: {type: Date,required: true},
-    location:{type:String,required:true},
-    amount:{type:Number,required:true},
-    status:{type:String,enum:["pending","accepted","completed","cancelled"],default:"pending",required:true}
+    provider_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "providers",
+      required: true,
+    },
 
-}, { timestamps: true })
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "service_category",
+      required: true,
+    },
 
-const booking=mongoose.model('bookings',bookingschema)
+    booking_dates: [
+      {
+        date: {
+          type: Date,
+          required: true,
+        },
+        slot: {
+          type: String,
+          enum: ["full_day", "half_day"],
+          required: true,
+        },
+      },
+    ],
 
-module.exports=booking
+    location: {
+      type: String,
+      required: true,
+    },
+
+    total_amount: {
+      type: Number,
+      required: true,
+    },
+
+    // payment info
+    payment_id: {
+      type: String, // store Stripe payment ID
+      required: true,
+    },
+
+    payment_status: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "accepted", "completed", "cancelled", "confirmed"],
+      default: "pending",
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("bookings", bookingSchema);

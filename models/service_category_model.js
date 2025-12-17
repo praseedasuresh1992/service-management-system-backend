@@ -1,12 +1,34 @@
-const mongoose=require('mongoose')
+mongoose = require('mongoose');
 
-const service_category_schema=new mongoose.Schema({
+const service_category_schema = new mongoose.Schema(
+  {
+    category_name: {
+      type: String,
+      required: true
+    },
 
-    category_name:{type:String,required:true},
-    description:{type:String,required:true},
+    description: {
+      type: String,
+      required: true
+    },
 
-}, { timestamps: true })
+    basic_amount: {
+      full_day: {
+        type: Number,
+        required: true
+      },
+      half_day: {
+        type: Number,
+        required: true
+      }
+    }
+  },
+  { timestamps: true }
+);
 
-const service_category=mongoose.model('service_category',service_category_schema)
+const service_category = mongoose.model(
+  'service_category',
+  service_category_schema
+);
 
-module.exports=service_category
+module.exports = service_category;

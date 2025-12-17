@@ -1,37 +1,45 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const commentschema = new mongoose.Schema({
+const ratingSchema = new mongoose.Schema(
+  {
+    booking_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "booking",
+      required: true,
+      unique: true // ⭐ one rating per booking
+    },
 
     user_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "users",
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: true
     },
 
     provider_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "providers",
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "providers",
+      required: true
     },
 
     category_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "service_category",
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "service_category",
+      required: true
     },
 
     rating: {
-        type: String,
-        required: true
+      type: Number,
+      min: 1,
+      max: 5,
+      required: true
     },
 
-    comments: {
-        type: String,
-        required: true
+    feedback: {
+      type: String,
+      required: true
     }
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true });
-
-const comments = mongoose.model('comments', commentschema);
-
-module.exports = comments;
+module.exports = mongoose.model("ratings", ratingSchema);

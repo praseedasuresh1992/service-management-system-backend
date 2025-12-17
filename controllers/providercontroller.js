@@ -132,24 +132,32 @@ exports.filterProviderforbooking = async (req, res) => {
       return res.status(400).json({ message: "needs array is required" });
     }
 
-    // Step 1: Find providers matching availability
+    // STEP 1: Match availability strictly
     const availabilityMatched = await ProviderAvailability.find({
       availability: {
         $all: needs.map(item => ({
-          $elemMatch: { date: item.date, slot: item.slot }
+          $elemMatch: {
+            date: item.date,
+            availability_type: item.availability_type,
+            is_available: true
+          }
         }))
       }
     }).populate("provider_id");
 
     if (!availabilityMatched.length) {
-      return res.status(404).json({ message: "No providers found for availability" });
+      return res
+        .status(404)
+        .json({ message: "No providers available for requested dates" });
     }
 
-    // Step 2: Extract provider_ids from availability
-    const providerIds = availabilityMatched.map(x => x.provider_id._id);
+    // STEP 2: Extract provider IDs
+    const providerIds = availabilityMatched.map(
+      item => item.provider_id._id
+    );
 
-    // Step 3: Apply category + verified + status + location
-    let filters = {
+    // STEP 3: Apply provider-level filters
+    const filters = {
       _id: { $in: providerIds },
       service_category: category_id,
       verified: true,
@@ -160,22 +168,21 @@ exports.filterProviderforbooking = async (req, res) => {
       filters.available_location = { $regex: location, $options: "i" };
     }
 
-    const finalProviders = await providermodel
+    const providers = await providermodel
       .find(filters)
-      .select("name email contactno available_location verified status service_category");
+      .select("name email contactno available_location service_category");
 
-    if (finalProviders.length === 0) {
+    if (!providers.length) {
       return res.status(404).json({
-        message: "No providers match all filters (category + verification + availability + location)"
+        message: "No providers match all booking criteria"
       });
     }
 
     res.status(200).json({
       success: true,
-      count: finalProviders.length,
-      data: finalProviders
+      count: providers.length,
+      data: providers
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

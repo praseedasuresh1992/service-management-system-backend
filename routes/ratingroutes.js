@@ -1,14 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const commentController = require('../controllers/rating_controller');
+const ratingController = require("../controllers/rating_controller");
+const auth = require("../middleware/auth");
 
-// Create
-router.post('/createcomments', commentController.createComment);
+// ⭐ Create rating
+router.post("/createrating", auth.authuser,auth.authorizeRoles,("user") ,ratingController.createRating);
 
-// Read
-router.get('/view allcomments', commentController.getAllComments);
-router.get('/viewcomment/:id', commentController.getCommentById);
+// ⭐ Provider profile ratings
+router.get(
+  "/provider/:provider_id",
+  ratingController.getRatingsByProvider
+);
 
-
+// ⭐ Admin
+router.get("/all", ratingController.getAllRatings);
 
 module.exports = router;
