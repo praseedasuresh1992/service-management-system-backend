@@ -2,10 +2,12 @@ const service_category = require("../models/service_category_model");
 
 exports.createcategory = async (req, res) => {
   try {
-    const { category_name,description} = req.body;
+    const { category_name,description,full_day,half_day} = req.body;
     const newcategory = new service_category({
     category_name,
-    description
+    description,
+    full_day,
+    half_day
     });
     await newcategory.save();
     res
@@ -33,8 +35,8 @@ exports.viewAllCategory = async (req, res) => {
 exports.updatecategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { category_name,description } = req.body;
-    updateData={ category_name,description }
+    const { category_name,description,full_day,half_day } = req.body;
+    updateData={ category_name,description,full_day,half_day }
     const updatedCategory = await service_category.findByIdAndUpdate(
             id,
             updateData,
