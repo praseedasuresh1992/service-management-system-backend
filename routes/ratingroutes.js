@@ -4,7 +4,7 @@ const ratingController = require("../controllers/rating_controller");
 const auth = require("../middleware/auth");
 
 // ⭐ Create rating
-router.post("/createrating", auth.authuser,auth.authorizeRoles,("user") ,ratingController.createRating);
+router.post("/createrating", auth.authuser,auth.authorizeRoles("user") ,ratingController.createRating);
 
 // ⭐ Provider profile ratings
 router.get(
