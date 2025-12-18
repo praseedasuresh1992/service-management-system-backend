@@ -14,12 +14,11 @@ const service_category_schema = new mongoose.Schema(
 
     basic_amount: {
       full_day: {
-        type: Number,
-        required: true
+        type: Number
       },
       half_day: {
-        type: Number,
-        required: true
+        type: Number
+       
       }
     }
   },
