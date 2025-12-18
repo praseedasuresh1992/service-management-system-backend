@@ -58,18 +58,29 @@ exports.createcategory = async (req, res) => {
   try {
     const { category_name, description, basic_amount } = req.body;
 
-    if (!basic_amount?.full_day || !basic_amount?.half_day) {
-      return res.status(400).json({ message: "Basic amount is required" });
+    if (
+      !category_name ||
+      !description ||
+      basic_amount == null ||
+      basic_amount.full_day == null ||
+      basic_amount.half_day == null
+    ) {
+      return res.status(400).json({
+        message: "All fields including full_day and half_day are required"
+      });
     }
 
     const newcategory = new service_category({
       category_name,
       description,
-      basic_amount
+      basic_amount: {
+        full_day: Number(basic_amount.full_day),
+        half_day: Number(basic_amount.half_day)
+      }
     });
 
     await newcategory.save();
-ki
+
     res.status(201).json({
       message: "Category registered successfully",
       category: newcategory
