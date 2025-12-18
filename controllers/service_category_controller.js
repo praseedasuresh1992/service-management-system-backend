@@ -2,22 +2,36 @@ const service_category = require("../models/service_category_model");
 
 exports.createcategory = async (req, res) => {
   try {
-    const { category_name,description,full_day,half_day} = req.body;
+    const { category_name, description, basic_amount } = req.body;
+
+    if (!basic_amount?.full_day || !basic_amount?.half_day) {
+      return res.status(400).json({
+        message: "Full day and Half day amount are required"
+      });
+    }
+
     const newcategory = new service_category({
-    category_name,
-    description,
-    full_day,
-    half_day
+      category_name,
+      description,
+      basic_amount: {
+        full_day: Number(basic_amount.full_day),
+        half_day: Number(basic_amount.half_day),
+      }
     });
+
     await newcategory.save();
-    res
-      .status(200)
-      .json({ message: 'category  registered successfully', category: newcategory });
+
+    res.status(201).json({
+      message: "Category registered successfully",
+      category: newcategory
+    });
+
   } catch (err) {
-    console.error('Error in createcategory:', err);
+    console.error("Error in createcategory:", err);
     res.status(500).json({ message: err.message });
   }
-}
+};
+
 exports.viewAllCategory = async (req, res) => {
   try {
     const findcategory = await service_category.find();
@@ -35,20 +49,44 @@ exports.viewAllCategory = async (req, res) => {
 exports.updatecategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { category_name,description,full_day,half_day } = req.body;
-    updateData={ category_name,description,full_day,half_day }
-    const updatedCategory = await service_category.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        );
-    if (!updatedCategory) return res.status(404).json({ message: "Category  not found" });
+    const { category_name, description, basic_amount } = req.body;
 
-    res.status(200).json(updatedCategory);
+    if (!basic_amount?.full_day || !basic_amount?.half_day) {
+      return res.status(400).json({
+        message: "Full day and Half day amount are required"
+      });
+    }
+
+    const updateData = {
+      category_name,
+      description,
+      basic_amount: {
+        full_day: Number(basic_amount.full_day),
+        half_day: Number(basic_amount.half_day)
+      }
+    };
+
+    const updatedCategory = await service_category.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.status(200).json({
+      message: "Category updated successfully",
+      category: updatedCategory
+    });
+
   } catch (err) {
+    console.error("Error in updatecategory:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 // Delete category
