@@ -8,12 +8,12 @@ exports.createcategory = async (req, res) => {
     description
     });
     await newcategory.save();
-    resjj
+    res
       .status(200)
       .json({ message: 'category  registered successfully', category: newcategory });
   } catch (err) {
     console.error('Error in createcategory:', err);
-    res.status(500).json({ message: err.message });l
+    res.status(500).json({ message: err.message });
   }
 }
 exports.viewAllCategory = async (req, res) => {
