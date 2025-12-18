@@ -13,7 +13,7 @@ router.post(
 router.get(
   '/service-category',
   auth.authuser,
-  auth.authorizeRoles("admin"),
+  auth.authorizeRoles("admin","user","provider"),
   categorycontroller.viewAllCategory
 );
 
