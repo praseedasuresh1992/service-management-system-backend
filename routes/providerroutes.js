@@ -19,6 +19,8 @@ router.post(
 
 router.post('/login',logincontroller.loginUser)
 
+router.get("/viewMyProviderProfile",auth.authuser,auth.authorizeRoles("provider"),providercontroller.viewMyProviderProfile )
+
 
 router.post(
   "/updateprovider",
