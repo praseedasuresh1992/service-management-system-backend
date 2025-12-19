@@ -24,10 +24,13 @@ router.post(
   "/updateprovider",
   auth.authuser,
   auth.authorizeRoles("provider"),
-  uploadProfile.single("profile_image"),             // Single profile image
-  uploadDocuments.array("verification_document", 10), // Multiple documents
+  upload.fields([
+    { name: "profile_image", maxCount: 1 },        // single profile image
+    { name: "verification_document", maxCount: 10 } // multiple documents
+  ]),
   providercontroller.updateMyProfile
 );
+
 
 router.delete(
   "/delete-profile-image",

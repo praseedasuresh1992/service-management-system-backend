@@ -218,68 +218,94 @@ exports.updateMyProfile = async (req, res) => {
       service_category,
       available_location,
       username
-        } = req.body;
+    } = req.body;
 
     const updateData = {};
 
-    // ---------------------------
-    // BASIC FIELDS UPDATE
-    // ---------------------------
+    // =============================
+    // BASIC FIELD UPDATES
+    // =============================
     if (name) updateData.name = name;
     if (email) updateData.email = email;
-    if (is_group !== undefined) updateData.is_group = is_group;
+    if (typeof is_group !== "undefined") updateData.is_group = is_group;
     if (members) updateData.members = members;
     if (address) updateData.address = address;
     if (contactno) updateData.contactno = contactno;
     if (service_category) updateData.service_category = service_category;
-    if (available_location) updateData.available_location = available_location;
+    if (available_location)
+      updateData.available_location = Array.isArray(available_location)
+        ? available_location
+        : [available_location];
     if (username) updateData.username = username;
 
-    // ---------------------------
+    // =============================
     // PROFILE IMAGE UPDATE
-    // ---------------------------
-    if (req.file) {  // profile image field (uploadProfile)
+    // =============================
+    if (req.files?.profile_image?.length > 0) {
+      const file = req.files.profile_image[0];
+
       // delete old image from cloudinary
-      if (provider.profile_image) {
-        const publicId = provider.profile_image.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(publicId);
+      if (provider.profile_image?.public_id) {
+        await cloudinary.uploader.destroy(provider.profile_image.public_id);
       }
 
-      updateData.profile_image ={url: req.file.path};  // Cloudinary URL
+      const uploadResult = await uploadFromBuffer(file.buffer, {
+        folder: "mern_profiles",
+        resource_type: "image"
+      });
+
+      updateData.profile_image = {
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id
+      };
     }
 
-    // ---------------------------
+    // =============================
     // DOCUMENTS UPDATE
-    // ---------------------------
-    if (req.files && req.files.length > 0) {
-      const docs = req.files.map((f) => f.path);  // Only URLs needed
+    // =============================
+    if (req.files?.verification_document?.length > 0) {
+      const newDocuments = [];
 
-      // push new documents into array
+      for (const doc of req.files.verification_document) {
+        const isPdf = doc.mimetype === "application/pdf";
+
+        const uploadResult = await uploadFromBuffer(doc.buffer, {
+          folder: "mern_documents",
+          resource_type: isPdf ? "raw" : "image"
+        });
+
+        newDocuments.push({
+          url: uploadResult.secure_url,
+          public_id: uploadResult.public_id
+        });
+      }
+
       updateData.verification_document = [
-        ...provider.verification_document,
-        ...docs,
+        ...(provider.verification_document || []),
+        ...newDocuments
       ];
     }
 
-    // ---------------------------
+    // =============================
     // SAVE UPDATED PROVIDER
-    // ---------------------------
+    // =============================
     const updatedProvider = await providermodel.findByIdAndUpdate(
       providerId,
       updateData,
       { new: true }
-    );
+    ).populate("service_category");
 
     res.status(200).json({
       message: "Profile updated successfully",
-      provider: updatedProvider,
+      data: updatedProvider
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("UPDATE PROVIDER ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 // ================================================
 // To delete Profile Image
 // ================================================
