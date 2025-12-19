@@ -20,14 +20,14 @@ router.post(
 router.post('/login',logincontroller.loginUser)
 
 
-// router.post(
-//   "/updateprovider",
-//   auth.authuser,
-//   auth.authorizeRoles("provider"),
-//   uploadProfile.single("profile_image"),             // Single profile image
-//   uploadDocuments.array("verification_document", 10), // Multiple documents
-//   providercontroller.updateMyProfile
-// );
+router.post(
+  "/updateprovider",
+  auth.authuser,
+  auth.authorizeRoles("provider"),
+  uploadProfile.single("profile_image"),             // Single profile image
+  uploadDocuments.array("verification_document", 10), // Multiple documents
+  providercontroller.updateMyProfile
+);
 
 router.delete(
   "/delete-profile-image",
@@ -45,7 +45,7 @@ router.put("/verifyprovider/:id",auth.authuser,auth.authorizeRoles("admin"),prov
 
 router.get('/viewallproviders',auth.authuser,auth.authorizeRoles("admin"),providercontroller.getProviders)
 router.post('/filterProviderforbooking',auth.authuser,auth.authorizeRoles("user"),providercontroller.filterProviderforbooking )
-router.get("/viewMyProviderProfile",auth.authuser,auth.authorizeRoles("provider"),providercontroller.viewMyProviderProfile )
+router.get("/",auth.authuser,auth.authorizeRoles("provider"),providercontroller.viewMyProviderProfile )
 
 
 router.get('/logoutprovider',logincontroller.logoutuser)

@@ -217,9 +217,8 @@ exports.updateMyProfile = async (req, res) => {
       contactno,
       service_category,
       available_location,
-      username,
-      password
-    } = req.body;
+      username
+        } = req.body;
 
     const updateData = {};
 
@@ -235,7 +234,6 @@ exports.updateMyProfile = async (req, res) => {
     if (service_category) updateData.service_category = service_category;
     if (available_location) updateData.available_location = available_location;
     if (username) updateData.username = username;
-    if (password) updateData.password = password;
 
     // ---------------------------
     // PROFILE IMAGE UPDATE
@@ -247,7 +245,7 @@ exports.updateMyProfile = async (req, res) => {
         await cloudinary.uploader.destroy(publicId);
       }
 
-      updateData.profile_image = req.file.path;  // Cloudinary URL
+      updateData.profile_image ={url: req.file.path};  // Cloudinary URL
     }
 
     // ---------------------------
