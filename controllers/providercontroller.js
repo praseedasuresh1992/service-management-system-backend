@@ -1,6 +1,8 @@
 const providermodel = require("../models/providermodel")
 const ProviderAvailability = require("../models/provider_availability_model")
 const cloudinary = require("../config/cloudinary")
+const uploadFromBuffer = require("../utils/cloudinaryUpload");
+
 
 const bcrypt = require('bcryptjs');
 
@@ -10,7 +12,7 @@ const bcrypt = require('bcryptjs');
 // ==========================
 exports.addProvider = async (req, res) => {
   try {
-    const { 
+    const {
       name,
       email,
       is_group,
@@ -20,48 +22,48 @@ exports.addProvider = async (req, res) => {
       service_category,
       available_location,
       username,
-      password 
+      password
     } = req.body;
-console.log("REQ.BODY:", req.body);
-console.log("REQ.FILES:", req.files);
 
     const hashedpassword = await bcrypt.hash(password, 10);
 
-    // Profile image
+    // 🔹 Profile image
     let profileData = {};
     if (req.files?.profile_image?.length > 0) {
       const file = req.files.profile_image[0];
-      const upload = await cloudinary.uploader.upload(file.path, {
+
+      const upload = await uploadFromBuffer(file.buffer, {
         folder: "mern_profiles",
+        resource_type: "image"
       });
+
       profileData = {
         url: upload.secure_url,
-        public_id: upload.public_id,
+        public_id: upload.public_id
       };
     }
 
-    // Multiple documents
-    let documents = [];
+    // 🔹 Documents
+    const documents = [];
     if (req.files?.verification_document) {
       for (const doc of req.files.verification_document) {
-        const upload = await cloudinary.uploader.upload(doc.path, {
+        const isPdf = doc.mimetype === "application/pdf";
+
+        const upload = await uploadFromBuffer(doc.buffer, {
           folder: "mern_documents",
-          resource_type: "raw",
+          resource_type: isPdf ? "raw" : "image"
         });
+
         documents.push({
           url: upload.secure_url,
-          public_id: upload.public_id,
+          public_id: upload.public_id
         });
       }
     }
 
-    // Parse available_location as array
-    let locations = [];
-    try {
-      locations = JSON.parse(available_location);
-    } catch {
-      locations = [available_location];
-    }
+    const locations = Array.isArray(available_location)
+      ? available_location
+      : [available_location];
 
     const newProvider = new providermodel({
       profile_image: profileData,
@@ -75,14 +77,19 @@ console.log("REQ.FILES:", req.files);
       available_location: locations,
       verification_document: documents,
       username,
-      password: hashedpassword,
+      password: hashedpassword
     });
 
     await newProvider.save();
-    res.status(201).json(newProvider);
+
+    res.status(201).json({
+      message: "Provider registered successfully",
+      data: newProvider
+    });
+
   } catch (err) {
     console.error("ADD PROVIDER ERROR:", err);
-    res.status(400).json({ error: err.message, details: err });
+    res.status(500).json({ error: err.message });
   }
 };
 
