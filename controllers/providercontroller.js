@@ -167,6 +167,10 @@ exports.filterProviderforbooking = async (req, res) => {
       status: "active",
       available_location: { $regex: location, $options: "i" }
     });
+    console.log("PROVIDER IDS:", providerIds);
+
+const rawProviders = await providermodel.find({ _id: { $in: providerIds } });
+console.log("RAW PROVIDERS:", rawProviders);
 
     res.json({
       success: true,
