@@ -147,7 +147,7 @@ exports.filterProviderforbooking = async (req, res) => {
       availability: {
         $all: needs.map(item => ({
           $elemMatch: {
-            date: item.date,
+            date: new Date(item.date),
             availability_type: item.availability_type,
             is_available: true
           }
@@ -175,7 +175,8 @@ exports.filterProviderforbooking = async (req, res) => {
     };
 
     if (location) {
-      filters.available_location = { $regex: location, $options: "i" };
+      filters.available_location = {$elemMatch:
+        { $regex: location, $options: "i" }};
     }
 
     const providers = await providermodel
