@@ -127,12 +127,6 @@ exports.viewMyProviderProfile = async (req, res) => {
 // ===============================
 // VIEW PROVIDER BASED ON CATEGORY 
 // ================================
-const normalizeDate = (date) => {
-  const d = new Date(date);
-  d.setUTCHours(0, 0, 0, 0);
-  return d;
-};
-
 exports.filterProviderforbooking = async (req, res) => {
   try {
     console.log("FILTER PROVIDER HIT");
@@ -140,65 +134,51 @@ exports.filterProviderforbooking = async (req, res) => {
 
     const { category_id, needs, location } = req.body;
 
-    if (!category_id)
-      return res.status(400).json({ message: "category_id is required" });
-
-    if (!Array.isArray(needs) || needs.length === 0)
-      return res.status(400).json({ message: "needs array is required" });
+    if (!category_id || !needs?.length || !location) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
     console.log("NEEDS:", needs);
 
-    const availabilityMatched = await ProviderAvailability.find({
+    const availabilityDocs = await ProviderAvailability.find({
       availability: {
-        $all: needs.map(item => ({
+        $all: needs.map(n => ({
           $elemMatch: {
-            date: normalizeDate(item.date),
-            availability_type: item.availability_type,
+            date: n.date,
+            availability_type: n.availability_type,
             is_available: true
           }
         }))
       }
     }).populate("provider_id");
 
-    console.log("MATCHED:", availabilityMatched.length);
+    console.log("MATCHED:", availabilityDocs.length);
 
-    if (!availabilityMatched.length) {
-      return res.status(200).json({
-        success: true,
-        data: []   // 👈 DO NOT use 404 here
-      });
+    if (!availabilityDocs.length) {
+      return res.json({ success: true, count: 0, data: [] });
     }
 
-    const providerIds = availabilityMatched.map(a => a.provider_id._id);
+    const providerIds = availabilityDocs.map(d => d.provider_id._id);
 
-    const filters = {
+    const providers = await providermodel.find({
       _id: { $in: providerIds },
       service_category: category_id,
       verified: true,
-      status: "active"
-    };
+      status: "active",
+      available_location: { $regex: location, $options: "i" }
+    });
 
-    if (location) {
-      filters.available_location = {
-        $elemMatch: { $regex: location, $options: "i" }
-      };
-    }
-
-    const providers = await providermodel
-      .find(filters)
-      .select("name contactno available_location service_category");
-
-    return res.status(200).json({
+    res.json({
       success: true,
       count: providers.length,
       data: providers
     });
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
   }
 };
-
 
 //=========== UPDATE Logged In PROVIDER ==========================
 exports.updateMyProfile = async (req, res) => {

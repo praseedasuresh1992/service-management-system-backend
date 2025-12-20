@@ -3,114 +3,60 @@ const ProviderAvailability=require("../models/provider_availability_model")
 // =======================================
 // CREATE OR UPDATE PROVIDER AVAILABILITY
 // =======================================
-
 exports.createAvailability = async (req, res) => {
   try {
-    const provider_id = req.user?.id;
+    const provider_id = req.user.id;
     const { availability } = req.body;
 
-    // ==========================
-    // Auth check
-    // ==========================
-    if (!provider_id) {
-      return res.status(401).json({
-        message: "Unauthorized: Provider ID not found"
-      });
+    if (!Array.isArray(availability) || !availability.length) {
+      return res.status(400).json({ message: "availability array required" });
     }
 
-    // ==========================
-    // Validate array
-    // ==========================
-    if (!Array.isArray(availability) || availability.length === 0) {
-      return res.status(400).json({
-        message: "Availability array is required"
-      });
-    }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const seen = new Set();
 
-    // ==========================
-    // Validate each item (MODEL BASED)
-    // ==========================
-    const requestCheck = new Set();
-
-    for (let item of availability) {
+    for (const item of availability) {
       if (
         !item.date ||
-        !item.availability_type ||
+        !dateRegex.test(item.date) ||
         !["full_day", "half_day"].includes(item.availability_type)
       ) {
-        return res.status(400).json({
-          message:
-            "Each availability must have date and availability_type (full_day / half_day)"
-        });
+        return res.status(400).json({ message: "Invalid availability format" });
       }
 
       const key = `${item.date}-${item.availability_type}`;
-
-      if (requestCheck.has(key)) {
-        return res.status(400).json({
-          message: `Duplicate availability in request: ${item.date} - ${item.availability_type}`
-        });
+      if (seen.has(key)) {
+        return res.status(400).json({ message: "Duplicate availability entry" });
       }
-
-      requestCheck.add(key);
+      seen.add(key);
     }
 
-    // ==========================
-    // Find existing availability
-    // ==========================
-    let existing = await ProviderAvailability.findOne({ provider_id });
+    let doc = await ProviderAvailability.findOne({ provider_id });
 
-    // ==========================
-    // Create new document
-    // ==========================
-    if (!existing) {
-      const newAvailability = new ProviderAvailability({
-        provider_id,
-        availability
+    if (!doc) {
+      doc = await ProviderAvailability.create({ provider_id, availability });
+    } else {
+      availability.forEach(item => {
+        const exists = doc.availability.some(
+          a =>
+            a.date === item.date &&
+            a.availability_type === item.availability_type
+        );
+
+        if (!exists) {
+          doc.availability.push({ ...item, is_available: true });
+        }
       });
-
-      await newAvailability.save();
-
-      return res.status(201).json({
-        message: "Availability created successfully",
-        data: newAvailability
-      });
+      await doc.save();
     }
 
-    // ==========================
-    // Merge availability
-    // ==========================
-    availability.forEach(item => {
-      const exists = existing.availability.some(
-        a =>
-          a.date === item.date &&
-          a.availability_type === item.availability_type
-      );
+    res.json({ message: "Availability saved", data: doc });
 
-      if (!exists) {
-        existing.availability.push({
-          date: item.date,
-          availability_type: item.availability_type,
-          is_available: item.is_available ?? true
-        });
-      }
-    });
-
-    await existing.save();
-
-    return res.status(200).json({
-      message: "Availability updated successfully",
-      data: existing
-    });
-
-  } catch (error) {
-    console.error("Availability Error:", error);
-    return res.status(500).json({
-      message: "Server error",
-      error: error.message
-   });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
+
 
 
 // ==========================
