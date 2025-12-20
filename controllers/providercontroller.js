@@ -128,6 +128,8 @@ exports.viewMyProviderProfile = async (req, res) => {
 // VIEW PROVIDER BASED ON CATEGORY 
 // ================================
 exports.filterProviderforbooking = async (req, res) => {
+    console.log("FILTER PROVIDER HIT");
+  console.log("USER:", req.user);
   try {
     const { category_id, needs, location } = req.body;
 
