@@ -127,27 +127,32 @@ exports.viewMyProviderProfile = async (req, res) => {
 // ===============================
 // VIEW PROVIDER BASED ON CATEGORY 
 // ================================
+const normalizeDate = (date) => {
+  const d = new Date(date);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+};
+
 exports.filterProviderforbooking = async (req, res) => {
-   
   try {
-     console.log("FILTER PROVIDER HIT");
-  console.log("USER:", req.user);
+    console.log("FILTER PROVIDER HIT");
+    console.log("USER:", req.user);
+
     const { category_id, needs, location } = req.body;
 
-    if (!category_id) {
+    if (!category_id)
       return res.status(400).json({ message: "category_id is required" });
-    }
 
-    if (!needs || !Array.isArray(needs) || needs.length === 0) {
+    if (!Array.isArray(needs) || needs.length === 0)
       return res.status(400).json({ message: "needs array is required" });
-    }
 
-    // STEP 1: Match availability strictly
+    console.log("NEEDS:", needs);
+
     const availabilityMatched = await ProviderAvailability.find({
       availability: {
         $all: needs.map(item => ({
           $elemMatch: {
-            date: new Date(item.date),
+            date: normalizeDate(item.date),
             availability_type: item.availability_type,
             is_available: true
           }
@@ -155,18 +160,17 @@ exports.filterProviderforbooking = async (req, res) => {
       }
     }).populate("provider_id");
 
+    console.log("MATCHED:", availabilityMatched.length);
+
     if (!availabilityMatched.length) {
-      return res
-        .status(404)
-        .json({ message: "No providers available for requested dates" });
+      return res.status(200).json({
+        success: true,
+        data: []   // 👈 DO NOT use 404 here
+      });
     }
 
-    // STEP 2: Extract provider IDs
-    const providerIds = availabilityMatched.map(
-      item => item.provider_id._id
-    );
+    const providerIds = availabilityMatched.map(a => a.provider_id._id);
 
-    // STEP 3: Apply provider-level filters
     const filters = {
       _id: { $in: providerIds },
       service_category: category_id,
@@ -175,25 +179,21 @@ exports.filterProviderforbooking = async (req, res) => {
     };
 
     if (location) {
-      filters.available_location = {$elemMatch:
-        { $regex: location, $options: "i" }};
+      filters.available_location = {
+        $elemMatch: { $regex: location, $options: "i" }
+      };
     }
 
     const providers = await providermodel
       .find(filters)
-      .select("name email contactno available_location service_category");
+      .select("name contactno available_location service_category");
 
-    if (!providers.length) {
-      return res.status(404).json({
-        message: "No providers match all booking criteria"
-      });
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: providers.length,
       data: providers
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
