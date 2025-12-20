@@ -8,6 +8,11 @@ router.post('/createbooking',auth.authuser,auth.authorizeRoles("user"),bookingco
 router.post('/calculateBookingAmount',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.calculateBookingAmount)
 router.get('/viewbookings',auth.authuser,bookingcontroller.getAllBookings)
 router.get('/viewMyBookings',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.getMyBookings)
+router.get(
+  "/provider/:providerId",
+  auth.authuser,
+  bookingcontroller.getBookingsByProvider
+);
 
 
 router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("providers","admin"),bookingcontroller.getFilteredBookings)

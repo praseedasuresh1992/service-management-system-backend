@@ -309,3 +309,33 @@ exports.deleteBooking = async (req, res) => {
         });
     }
 };
+// ===========disable already bookeddates=======
+exports.getBookingsByProvider = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+
+    const bookings = await bookingmodel.find({
+      provider_id: providerId,
+      status: { $ne: "cancelled" }
+    });
+
+    if (!bookings.length) {
+      return res.status(200).json({
+        success: true,
+        data: []
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: bookings
+    });
+
+  } catch (error) {
+    console.error("Provider bookings error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch provider bookings"
+    });
+  }
+};
