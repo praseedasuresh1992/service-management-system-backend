@@ -196,9 +196,7 @@ exports.filterProviderforbooking = async (req, res) => {
 };
 
 
-// ==========================
-// UPDATE Logged In PROVIDER
-// ==========================
+//=========== UPDATE Logged In PROVIDER ==========================
 exports.updateMyProfile = async (req, res) => {
   try {
     const providerId = req.user.id;

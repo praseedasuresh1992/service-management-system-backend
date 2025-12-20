@@ -108,7 +108,7 @@ exports.createAvailability = async (req, res) => {
     return res.status(500).json({
       message: "Server error",
       error: error.message
-    });
+f7    });
   }
 };
 
