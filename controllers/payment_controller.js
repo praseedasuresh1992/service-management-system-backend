@@ -57,8 +57,8 @@ exports.createCheckoutSession = async (req, res) => {
         },
       ],
 
-      success_url: `https://service-management-system-backend-x9uz.onrender.com/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://service-management-system-backend-x9uz.onrender.com/booking-cancel`,
+      success_url: `https://service-management-system-backend-x9uz.onrender.com/userDashboard/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://service-management-system-backend-x9uz.onrender.com/userDashboard/booking-cancel`,
     });
 
     res.status(200).json({ url: session.url });
