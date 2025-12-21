@@ -228,3 +228,26 @@ exports.getBookingsByProvider = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch provider bookings" });
   }
 };
+// ======all bokkings of logged user========
+exports.getMyBookings = async (req, res) => {
+  try {
+    const userId = req.user.id; // from auth middleware (JWT)
+
+    const bookings = await bookingmodel.find({ user_id: userId })
+      .populate("provider_id", "name available_location")
+      .populate("category_id", "category_name")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: bookings.length,
+      data: bookings,
+    });
+  } catch (error) {
+    console.error("Get My Bookings Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch bookings",
+    });
+  }
+};
