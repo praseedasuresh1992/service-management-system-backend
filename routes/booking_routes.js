@@ -5,7 +5,7 @@ const auth=require('../middleware/auth')
 
 
 router.post('/create-checkout-session',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.createBookingAfterCheckout)
-router.post('/calculateBookingAmount',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.calculateBookingAmount)
+router.post('/calculateBookingAmount',auth.authuser,bookingcontroller.calculateBookingAmount)
 router.get('/viewbookings',auth.authuser,bookingcontroller.getAllBookings)
 router.get('/viewMyBookings',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.getMyBookings)
 router.get(
