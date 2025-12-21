@@ -34,19 +34,20 @@ exports.calculateBookingAmount = async (req, res) => {
   }
 };
 
-/* ================= CREATE BOOKING AFTER CHECKOUT ================= */
 exports.createBookingAfterCheckout = async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const user_id = req.user.id || req.user._id;
+
     const {
       provider_id,
       category_id,
       booking_dates,
       location,
-      session_id
+      session_id,
     } = req.body;
 
     if (
+      !user_id ||
       !provider_id ||
       !category_id ||
       !Array.isArray(booking_dates) ||
@@ -57,22 +58,30 @@ exports.createBookingAfterCheckout = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    /* 🔐 Verify Checkout Session */
+    // 🔐 Verify Stripe session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
     if (!session || session.payment_status !== "paid") {
       return res.status(400).json({ message: "Payment not completed" });
     }
 
+    // ❌ Prevent duplicate booking
+    const existing = await bookingmodel.findOne({
+      stripe_session_id: session_id,
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: "Booking already created" });
+    }
+
     const category = await ServiceCategory.findById(category_id);
-    if (!category || !category.basic_amount) {
+    if (!category?.basic_amount) {
       return res.status(400).json({ message: "Category pricing missing" });
     }
 
-    /* 🔢 Recalculate total amount (server-side trust only) */
     let total_amount = 0;
 
-    const formattedDates = booking_dates.map(item => {
+    const formattedDates = booking_dates.map((item) => {
       const slot = item.slot || item.availability_type;
 
       if (!["full_day", "half_day"].includes(slot)) {
@@ -86,41 +95,41 @@ exports.createBookingAfterCheckout = async (req, res) => {
 
       return {
         date: new Date(item.date),
-        slot
+        slot,
       };
     });
 
-    /* 🔒 Validate advance (8%) */
+    // 🔢 8% advance (Stripe stores amount in paise)
     const expectedAdvance = Math.round(total_amount * 0.08 * 100);
 
     if (session.amount_total !== expectedAdvance) {
       return res.status(400).json({ message: "Payment amount mismatch" });
     }
 
-    /* 🧾 Create booking */
+    // 🧾 Create booking
     const booking = await bookingmodel.create({
       user_id,
       provider_id,
       category_id,
       booking_dates: formattedDates,
-      location,
+      location: String(location),
       total_amount,
-      advance_paid: expectedAdvance / 100,
       stripe_session_id: session_id,
+      advance_paid: expectedAdvance / 100,
       payment_status: "advance_paid",
-      status: "confirmed"
+      status: "confirmed",
     });
 
     res.status(201).json({
       message: "Booking created successfully",
-      booking
+      booking,
     });
-
   } catch (error) {
     console.error("Booking error:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 /* ================= OTHER CONTROLLERS (UNCHANGED) ================= */
 

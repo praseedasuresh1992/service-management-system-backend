@@ -44,21 +44,27 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
-    // payment info
-    payment_id: {
-      type: String, // store Stripe payment ID
+    // 🔐 Stripe details
+    stripe_session_id: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    advance_paid: {
+      type: Number,
       required: true,
     },
 
     payment_status: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "advance_paid", "paid", "failed"],
       default: "pending",
     },
 
     status: {
       type: String,
-      enum: ["pending", "accepted", "completed", "cancelled", "confirmed"],
+      enum: ["pending", "accepted", "completed", "cancelled"],
       default: "pending",
     },
   },
