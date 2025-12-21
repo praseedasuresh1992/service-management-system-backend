@@ -9,5 +9,7 @@ router.post(
   auth.authuser,
   paymentController.createPaymentIntent
 );
+router.post("/create-checkout-session", paymentController.createCheckoutSession);
+
 
 module.exports = router;

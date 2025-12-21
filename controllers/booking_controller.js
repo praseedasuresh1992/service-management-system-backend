@@ -2,103 +2,84 @@ const bookingmodel=require("../models/bookingmodel")
 const ServiceCategory = require("../models/service_category_model");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// ============calculate the amount===============
+
+// ================= CALCULATE TOTAL AMOUNT =================
 exports.calculateBookingAmount = async (req, res) => {
   try {
     const { category_id, booking_dates } = req.body;
 
-    if (!category_id || !Array.isArray(booking_dates) || booking_dates.length === 0) {
-      return res.status(400).json({
-        message: "Category and booking dates are required"
-      });
+    if (!category_id || !booking_dates?.length) {
+      return res.status(400).json({ message: "Category and booking dates required" });
     }
 
     const category = await ServiceCategory.findById(category_id);
-    if (!category) {
-      return res.status(404).json({ message: "Service category not found" });
-    }
-
-    if (!category.basic_amount) {
-      return res.status(400).json({
-        message: "Pricing not configured for this category"
-      });
+    if (!category?.basic_amount) {
+      return res.status(404).json({ message: "Pricing not found" });
     }
 
     let total_amount = 0;
 
     booking_dates.forEach(item => {
       const slot = item.slot || item.availability_type;
-
-      if (!item.date || !slot) {
-        throw new Error("Invalid booking_dates format");
-      }
-
-      if (!["full_day", "half_day"].includes(slot)) {
-        throw new Error("Invalid slot value");
-      }
-
-      total_amount +=
-        slot === "full_day"
-          ? category.basic_amount.full_day
-          : category.basic_amount.half_day;
+      if (slot === "full_day") total_amount += category.basic_amount.full_day;
+      if (slot === "half_day") total_amount += category.basic_amount.half_day;
     });
 
     res.status(200).json({
-      message: "Amount calculated successfully",
-      total_amount
+      total_amount,
+      advance_amount: Math.round(total_amount * 0.08)
     });
 
   } catch (error) {
-    console.error("Amount calculation error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// =========create booking=================
-exports.createBookingAfterPayment = async (req, res) => {
+// ================= CREATE BOOKING AFTER CHECKOUT =================
+exports.createBookingAfterCheckout = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const { provider_id, category_id, booking_dates, location, payment_id } = req.body;
+    const {
+      provider_id,
+      category_id,
+      booking_dates,
+      location,
+      session_id
+    } = req.body;
 
-    if (!provider_id || !category_id || !booking_dates || !payment_id || !location) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!session_id) {
+      return res.status(400).json({ message: "Session ID required" });
     }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(payment_id);
+    // 🔐 Verify Checkout Session
+    const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    if (!paymentIntent || paymentIntent.status !== "succeeded") {
+    if (session.payment_status !== "paid") {
       return res.status(400).json({ message: "Payment not completed" });
     }
 
     const category = await ServiceCategory.findById(category_id);
-    if (!category || !category.basic_amount) {
+    if (!category?.basic_amount) {
       return res.status(400).json({ message: "Category pricing missing" });
     }
 
+    // 🔢 Calculate total amount again (server trust only)
     let total_amount = 0;
-
     const formattedDates = booking_dates.map(item => {
       const slot = item.slot || item.availability_type;
-
-      if (!["full_day", "half_day"].includes(slot)) {
-        throw new Error("Invalid slot value");
-      }
-
-      total_amount +=
-        slot === "full_day"
-          ? category.basic_amount.full_day
-          : category.basic_amount.half_day;
-
-      return {
-        date: new Date(item.date),
-        slot
-      };
+      if (slot === "full_day") total_amount += category.basic_amount.full_day;
+      if (slot === "half_day") total_amount += category.basic_amount.half_day;
+      return { date: new Date(item.date), slot };
     });
 
-    if (paymentIntent.amount !== total_amount * 100) {
+    const expectedAdvance = Math.round(total_amount * 0.08 * 100);
+
+    // 🔒 Amount verification
+    if (session.amount_total !== expectedAdvance) {
       return res.status(400).json({ message: "Payment amount mismatch" });
     }
 
+    // 🧾 Create Booking
     const booking = await bookingmodel.create({
       user_id,
       provider_id,
@@ -106,67 +87,22 @@ exports.createBookingAfterPayment = async (req, res) => {
       booking_dates: formattedDates,
       location,
       total_amount,
-      payment_id,
-      payment_status: "paid",
+      advance_paid: expectedAdvance / 100,
+      stripe_session_id: session_id,
+      payment_status: "advance_paid",
       status: "confirmed"
     });
 
     res.status(201).json({
       message: "Booking created successfully",
-      data: booking
+      booking
     });
 
   } catch (error) {
-    console.error("Create booking error:", error);
+    console.error("Booking error:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
-// ===============view booking=================
-exports.getAllBookings = async (req, res) => {
-  try {
-    console.log("view booking")
-    const bookings = await bookingmodel.find()
-      .populate("user_id")
-      .populate("provider_id")
-      .populate("category_id")
-
-    res.status(200).json({ success: true, data: bookings });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// =======================================
-// VIEW ALL BOOKINGS OF LOGGED-IN USER
-// =======================================
-exports.getMyBookings = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const bookings = await bookingmodel.find({ user_id: userId })
-      .populate("provider_id", "-password")
-      .populate("category_id")
-      .sort({ createdAt: -1 });
-
-    if (!bookings.length) {
-      return res.status(404).json({ message: "No bookings found" });
-    }
-
-    res.status(200).json({
-      message: "Bookings fetched successfully",
-      count: bookings.length,
-      data: bookings
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch bookings",
-      error: error.message
-    });
-  }
-};
-
 
 // update booking status
 exports.updateBookingStatus = async (req, res) => {
