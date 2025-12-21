@@ -57,8 +57,8 @@ exports.createCheckoutSession = async (req, res) => {
         },
       ],
 
-      success_url: `${process.env.CLIENT_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+      success_url: `${process.env.VITE_API_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.VITE_API_URL}/booking-cancel`,
     });
 
     res.status(200).json({ url: session.url });
