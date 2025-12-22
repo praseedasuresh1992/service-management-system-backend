@@ -6,6 +6,8 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 exports.calculateBookingAmount = async (req, res) => {
   try {
     const { category_id, booking_dates } = req.body;
+console.log("category id",category_id)
+console.log("booking date",booking_dates)
 
     if (!category_id || !Array.isArray(booking_dates) || !booking_dates.length) {
       return res.status(400).json({ message: "Category and booking dates required" });
@@ -117,7 +119,7 @@ exports.createBookingAfterCheckout = async (req, res) => {
       stripe_session_id: session_id,
       advance_paid: expectedAdvance / 100,
       payment_status: "advance_paid",
-      status: "confirmed",
+      status: "pending",
     });
 
     res.status(201).json({
