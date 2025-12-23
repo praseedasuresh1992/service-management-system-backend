@@ -13,6 +13,17 @@ router.get(
   auth.authuser,
   bookingcontroller.getBookingsByProvider
 );
+router.get(
+  "/viewAllBooking",
+  auth.authuser,auth.authorizeRoles("provider"),
+  bookingcontroller.getBookingsByProvider
+);
+
+router.put(
+  "updateBookingStatus/:bookingId/status",
+  auth.authuser,auth.authorizeRoles("provider"),
+  bookingcontroller.updateBookingStatus
+);
 
 
 router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("providers","admin"),bookingcontroller.getFilteredBookings)

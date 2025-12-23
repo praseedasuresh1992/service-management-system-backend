@@ -223,22 +223,113 @@ exports.deleteBooking = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error });
   }
 };
-
+// ========view booking details by provider============
 exports.getBookingsByProvider = async (req, res) => {
   try {
-    const { providerId } = req.params;
+    const providerId = req.user.id; // 🔐 from token
 
-    const bookings = await bookingmodel.find({
-      provider_id: providerId,
-      status: { $ne: "cancelled" }
+    const bookings = await bookingmodel
+      .find({
+        provider_id: providerId,
+        status: { $ne: "cancelled" },
+      })
+      .populate("user_id", "username email")
+      .populate("provider_id", "name")
+      .populate("category_id", "category_name")
+      .select("-stripe_session_id -payment_status -advance_paid")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: bookings,
     });
-
-    res.status(200).json({ success: true, data: bookings });
-
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to fetch provider bookings" });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch provider bookings",
+    });
   }
 };
+// ===update booking status by user (accept or reject booking)===
+
+const { differenceInDays } = require("date-fns");
+
+exports.updateBookingStatus = async (req, res) => {
+  try {
+    const providerId = req.user.id; // 🔐 from token
+    const { bookingId } = req.params;
+    const { status } = req.body;
+
+    const booking = await bookingmodel.findOne({
+      _id: bookingId,
+      provider_id: providerId, // ownership check
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    /* ================= PENDING ================= */
+    if (booking.status === "pending") {
+      if (!["accepted", "cancelled"].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid status change",
+        });
+      }
+    }
+
+    /* ================= ACCEPTED ================= */
+    if (booking.status === "accepted") {
+      if (status !== "cancelled") {
+        return res.status(400).json({
+          success: false,
+          message: "Only cancellation allowed",
+        });
+      }
+
+      const firstBookingDate = new Date(booking.booking_dates[0].date);
+      const today = new Date();
+
+      const diffDays = differenceInDays(firstBookingDate, today);
+
+      if (diffDays < 7) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Cannot cancel booking less than 7 days before the booking date",
+        });
+      }
+    }
+
+    /* ================= BLOCK OTHERS ================= */
+    if (!["pending", "accepted"].includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status change not allowed",
+      });
+    }
+
+    booking.status = status;
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Booking status updated successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update booking status",
+    });
+  }
+};
+
 // ======all bokkings of logged user========
 exports.getMyBookings = async (req, res) => {
   try {
