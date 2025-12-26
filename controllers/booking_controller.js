@@ -133,32 +133,7 @@ exports.createBookingAfterCheckout = async (req, res) => {
 };
 
 
-/* ================= OTHER CONTROLLERS (UNCHANGED) ================= */
 
-exports.updateBookingStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const validStatus = ["pending", "accepted", "completed", "cancelled"];
-    if (!validStatus.includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
-    }
-
-    const booking = await bookingmodel.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
-
-    res.status(200).json({ message: "Status updated successfully", booking });
-
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error });
-  }
-};
 
 exports.updateBookingDetails = async (req, res) => {
   try {
@@ -255,21 +230,34 @@ exports.getBookingsByProvider = async (req, res) => {
 
 const { differenceInDays } = require("date-fns");
 
+
 exports.updateBookingStatus = async (req, res) => {
   try {
-    const providerId = req.user.id; // 🔐 from token
+    const providerId = req.user.id; // from JWT
     const { bookingId } = req.params;
     const { status } = req.body;
 
-    const booking = await bookingmodel.findOne({
-      _id: bookingId,
-      provider_id: providerId, // ownership check
-    });
+    console.log("STATUS RECEIVED:", status);
+    console.log("PROVIDER FROM TOKEN:", providerId);
+    console.log("BOOKING ID:", bookingId);
+
+    const booking = await bookingmodel.findById(bookingId);
 
     if (!booking) {
       return res.status(404).json({
         success: false,
         message: "Booking not found",
+      });
+    }
+
+    console.log("BOOKING PROVIDER:", booking.provider_id);
+    console.log("CURRENT STATUS:", booking.status);
+
+    // 🔐 Ownership check
+    if (String(booking.provider_id) !== providerId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to update this booking",
       });
     }
 
@@ -293,9 +281,7 @@ exports.updateBookingStatus = async (req, res) => {
       }
 
       const firstBookingDate = new Date(booking.booking_dates[0].date);
-      const today = new Date();
-
-      const diffDays = differenceInDays(firstBookingDate, today);
+      const diffDays = differenceInDays(firstBookingDate, new Date());
 
       if (diffDays < 7) {
         return res.status(400).json({
@@ -320,15 +306,17 @@ exports.updateBookingStatus = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Booking status updated successfully",
+      booking,
     });
   } catch (error) {
-    console.error(error);
+    console.error("UPDATE STATUS ERROR:", error);
     res.status(500).json({
       success: false,
       message: "Failed to update booking status",
     });
   }
 };
+
 
 // ======all bokkings of logged user========
 exports.getMyBookings = async (req, res) => {

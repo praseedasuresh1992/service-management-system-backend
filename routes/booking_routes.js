@@ -20,15 +20,14 @@ router.get(
 );
 
 router.put(
-  "updateBookingStatus/:bookingId/status",
+  "/updateBookingStatus/:bookingId/status",
   auth.authuser,auth.authorizeRoles("provider"),
   bookingcontroller.updateBookingStatus
 );
 
 
-router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("providers","admin"),bookingcontroller.getFilteredBookings)
+router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("provider","admin"),bookingcontroller.getFilteredBookings)
 
-router.put('/updateBookingStatus/:id',auth.authuser,auth.authorizeRoles("providers","admin"),bookingcontroller.updateBookingStatus)
 router.put('/updatebooking/:id',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.updateBookingDetails)
 
 
