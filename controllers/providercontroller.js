@@ -130,6 +130,7 @@ exports.viewMyProviderProfile = async (req, res) => {
 exports.filterProviderforbooking = async (req, res) => {
   try {
     const { category_id, needs, location } = req.body;
+    console.log("FILTER PAYLOAD:", req.body);
 
     if (
       !category_id ||
