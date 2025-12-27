@@ -129,16 +129,30 @@ exports.viewMyProviderProfile = async (req, res) => {
 // ================================
 exports.filterProviderforbooking = async (req, res) => {
   try {
-    console.log("FILTER PROVIDER HIT");
-    console.log("USER:", req.user);
-
     const { category_id, needs, location } = req.body;
 
-    if (!category_id || !needs?.length || !location) {
-      return res.status(400).json({ message: "Missing fields" });
+    if (
+      !category_id ||
+      !location ||
+      !Array.isArray(needs) ||
+      !needs.length
+    ) {
+      return res.status(400).json({
+        message: "Invalid request payload"
+      });
     }
 
-    console.log("NEEDS:", needs);
+    // Strict validation
+    for (const n of needs) {
+      if (
+        typeof n.date !== "string" ||
+        !["full_day", "half_day"].includes(n.availability_type)
+      ) {
+        return res.status(400).json({
+          message: "Invalid availability format"
+        });
+      }
+    }
 
     const availabilityDocs = await ProviderAvailability.find({
       availability: {
@@ -151,8 +165,6 @@ exports.filterProviderforbooking = async (req, res) => {
         }))
       }
     }).populate("provider_id");
-
-    console.log("MATCHED:", availabilityDocs.length);
 
     if (!availabilityDocs.length) {
       return res.json({ success: true, count: 0, data: [] });
@@ -167,10 +179,6 @@ exports.filterProviderforbooking = async (req, res) => {
       status: "active",
       available_location: { $regex: location, $options: "i" }
     });
-    console.log("PROVIDER IDS:", providerIds);
-
-const rawProviders = await providermodel.find({ _id: { $in: providerIds } });
-console.log("RAW PROVIDERS:", rawProviders);
 
     res.json({
       success: true,
@@ -179,8 +187,8 @@ console.log("RAW PROVIDERS:", rawProviders);
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    console.error("FILTER PROVIDER ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
