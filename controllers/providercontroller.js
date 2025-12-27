@@ -61,9 +61,22 @@ exports.addProvider = async (req, res) => {
       }
     }
 
-    const locations = Array.isArray(available_location)
-      ? available_location
-      : [available_location];
+    let locations = available_location;
+
+// If frontend sent JSON string
+if (typeof locations === "string") {
+  try {
+    locations = JSON.parse(locations);
+  } catch {
+    locations = [locations];
+  }
+}
+
+// Final safety
+if (!Array.isArray(locations)) {
+  locations = [locations];
+}
+
 
     const newProvider = new providermodel({
       profile_image: profileData,
@@ -227,10 +240,22 @@ exports.updateMyProfile = async (req, res) => {
     if (address) updateData.address = address;
     if (contactno) updateData.contactno = contactno;
     if (service_category) updateData.service_category = service_category;
-    if (available_location)
-      updateData.available_location = Array.isArray(available_location)
-        ? available_location
-        : [available_location];
+    if (available_location) {
+  let locations = available_location;
+
+  if (typeof locations === "string") {
+    try {
+      locations = JSON.parse(locations);
+    } catch {
+      locations = [locations];
+    }
+  }
+
+  updateData.available_location = Array.isArray(locations)
+    ? locations
+    : [locations];
+}
+
     if (username) updateData.username = username;
 
     // =============================
