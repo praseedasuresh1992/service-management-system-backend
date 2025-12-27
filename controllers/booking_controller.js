@@ -97,7 +97,7 @@ exports.createBookingAfterCheckout = async (req, res) => {
 
       return {
         date: new Date(item.date),
-        slot,
+        availability_type,
       };
     });
 
