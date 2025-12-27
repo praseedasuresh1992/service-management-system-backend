@@ -21,9 +21,9 @@ console.log("booking date",booking_dates)
     let total_amount = 0;
 
     booking_dates.forEach(item => {
-      const slot = item.slot || item.availability_type;
-      if (slot === "full_day") total_amount += category.basic_amount.full_day;
-      if (slot === "half_day") total_amount += category.basic_amount.half_day;
+      const availability_type = item.slot || item.availability_type;
+      if (availability_type === "full_day") total_amount += category.basic_amount.full_day;
+      if (availability_type === "half_day") total_amount += category.basic_amount.half_day;
     });
 
     res.status(200).json({
@@ -67,7 +67,7 @@ exports.createBookingAfterCheckout = async (req, res) => {
       return res.status(400).json({ message: "Payment not completed" });
     }
 
-    // ❌ Prevent duplicate booking
+    //  Prevent duplicate booking
     const existing = await bookingmodel.findOne({
       stripe_session_id: session_id,
     });
@@ -84,14 +84,14 @@ exports.createBookingAfterCheckout = async (req, res) => {
     let total_amount = 0;
 
     const formattedDates = booking_dates.map((item) => {
-      const slot = item.slot || item.availability_type;
+      const availability_type = item.availability_type;
 
-      if (!["full_day", "half_day"].includes(slot)) {
-        throw new Error("Invalid slot");
+      if (!["full_day", "half_day"].includes(availability_type)) {
+        throw new Error("Invalid availability_type");
       }
 
       total_amount +=
-        slot === "full_day"
+        availability_type === "full_day"
           ? category.basic_amount.full_day
           : category.basic_amount.half_day;
 
