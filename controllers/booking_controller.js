@@ -206,7 +206,7 @@ exports.getBookingsByProvider = async (req, res) => {
     const bookings = await bookingmodel
       .find({
         provider_id: providerId,
-        status: { $ne: "cancelled" },
+        status: { $ne: "rejected" },
       })
       .populate("user_id", "username email")
       .populate("provider_id", "name")
