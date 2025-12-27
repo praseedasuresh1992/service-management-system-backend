@@ -22,10 +22,7 @@ const bookingSchema = new mongoose.Schema(
 
     booking_dates: [
       {
-        date: {
-          type: Date,
-          required: true,
-        },
+        date: { type: Date, required: true },
         slot: {
           type: String,
           enum: ["full_day", "half_day"],
@@ -34,27 +31,17 @@ const bookingSchema = new mongoose.Schema(
       },
     ],
 
-    location: {
-      type: String,
-      required: true,
-    },
+    location: { type: String, required: true },
 
-    total_amount: {
-      type: Number,
-      required: true,
-    },
+    total_amount: { type: Number, required: true },
 
-    // 🔐 Stripe details
     stripe_session_id: {
       type: String,
       required: true,
       unique: true,
     },
 
-    advance_paid: {
-      type: Number,
-      required: true,
-    },
+    advance_paid: { type: Number, required: true },
 
     payment_status: {
       type: String,
@@ -64,8 +51,12 @@ const bookingSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "accepted", "completed", "cancelled"],
+      enum: ["pending", "accepted", "completed", "rejected"],
       default: "pending",
+    },
+
+    rejection_reason: {
+      type: String,
     },
   },
   { timestamps: true }

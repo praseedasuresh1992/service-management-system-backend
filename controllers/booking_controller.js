@@ -230,16 +230,11 @@ exports.getBookingsByProvider = async (req, res) => {
 
 const { differenceInDays } = require("date-fns");
 
-
 exports.updateBookingStatus = async (req, res) => {
   try {
-    const providerId = req.user.id; // from JWT
+    const providerId = req.user.id;
     const { bookingId } = req.params;
-    const { status } = req.body;
-
-    console.log("STATUS RECEIVED:", status);
-    console.log("PROVIDER FROM TOKEN:", providerId);
-    console.log("BOOKING ID:", bookingId);
+    const { status, rejection_reason } = req.body;
 
     const booking = await bookingmodel.findById(bookingId);
 
@@ -250,46 +245,78 @@ exports.updateBookingStatus = async (req, res) => {
       });
     }
 
-    console.log("BOOKING PROVIDER:", booking.provider_id);
-    console.log("CURRENT STATUS:", booking.status);
-
-    // 🔐 Ownership check
+    // 🔐 Provider ownership check
     if (String(booking.provider_id) !== providerId) {
       return res.status(403).json({
         success: false,
-        message: "You are not allowed to update this booking",
+        message: "Unauthorized access",
+      });
+    }
+
+    const firstBookingDate = new Date(booking.booking_dates[0].date);
+    const today = new Date();
+    const diffDays = differenceInDays(firstBookingDate, today);
+
+    /* ================= AUTO REJECT (PENDING + 10 DAYS) ================= */
+    if (booking.status === "pending" && diffDays <= 10) {
+      booking.status = "rejected";
+      booking.rejection_reason =
+        "Automatically rejected due to less than or equal to 10 days remaining";
+
+      await booking.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Booking automatically rejected due to 10-day rule",
+        booking,
       });
     }
 
     /* ================= PENDING ================= */
     if (booking.status === "pending") {
-      if (!["accepted", "cancelled"].includes(status)) {
+      if (!["accepted", "rejected"].includes(status)) {
         return res.status(400).json({
           success: false,
           message: "Invalid status change",
         });
       }
+
+      if (status === "rejected") {
+        if (!rejection_reason) {
+          return res.status(400).json({
+            success: false,
+            message: "Rejection reason required",
+          });
+        }
+
+        booking.status = "rejected";
+        booking.rejection_reason = rejection_reason;
+      }
+
+      if (status === "accepted") {
+        booking.status = "accepted";
+      }
     }
 
     /* ================= ACCEPTED ================= */
     if (booking.status === "accepted") {
-      if (status !== "cancelled") {
+      if (status !== "rejected") {
         return res.status(400).json({
           success: false,
-          message: "Only cancellation allowed",
+          message: "Only rejection allowed",
         });
       }
-
-      const firstBookingDate = new Date(booking.booking_dates[0].date);
-      const diffDays = differenceInDays(firstBookingDate, new Date());
 
       if (diffDays < 7) {
         return res.status(400).json({
           success: false,
           message:
-            "Cannot cancel booking less than 7 days before the booking date",
+            "You can’t reject the booking because only 7 days remain. Please contact customer. Penalty applies.",
         });
       }
+
+      booking.status = "rejected";
+      booking.rejection_reason = rejection_reason || "Rejected by provider";
     }
 
     /* ================= BLOCK OTHERS ================= */
@@ -300,7 +327,6 @@ exports.updateBookingStatus = async (req, res) => {
       });
     }
 
-    booking.status = status;
     await booking.save();
 
     res.status(200).json({
