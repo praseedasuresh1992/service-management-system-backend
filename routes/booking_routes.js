@@ -31,7 +31,6 @@ router.get('/filteredbookings',auth.authuser,auth.authorizeRoles("provider","adm
 router.put('/updatebooking/:id',auth.authuser,auth.authorizeRoles("user"),bookingcontroller.updateBookingDetails)
 
 
-router.post('/deletebooking/:id',bookingcontroller.deleteBooking)
 
 
 module.exports=router

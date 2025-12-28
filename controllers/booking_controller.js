@@ -178,26 +178,7 @@ exports.getFilteredBookings = async (req, res) => {
   }
 };
 
-exports.deleteBooking = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const booking = await bookingmodel.findById(id);
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
-
-    if (booking.status !== "pending") {
-      return res.status(400).json({
-        message: `Cannot delete booking with status '${booking.status}'`
-      });
-    }
-
-    await bookingmodel.findByIdAndDelete(id);
-    res.status(200).json({ message: "Booking deleted successfully" });
-
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error });
-  }
-};
 // ========view booking details by provider============
 exports.getBookingsByProvider = async (req, res) => {
   try {
