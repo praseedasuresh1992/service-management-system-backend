@@ -21,7 +21,7 @@ console.log("booking date",booking_dates)
     let total_amount = 0;
 
     booking_dates.forEach(item => {
-      const availability_type = item.slot || item.availability_type;
+      const availability_type =  item.availability_type;
       if (availability_type === "full_day") total_amount += category.basic_amount.full_day;
       if (availability_type === "half_day") total_amount += category.basic_amount.half_day;
     });
@@ -209,13 +209,22 @@ exports.getBookingsByProvider = async (req, res) => {
 };
 // ===update booking status by user (accept or reject booking)===
 
+
 const { differenceInDays } = require("date-fns");
+const bookingmodel = require("../models/bookingmodel");
 
 exports.updateBookingStatus = async (req, res) => {
   try {
     const providerId = req.user.id;
     const { bookingId } = req.params;
     const { status, rejection_reason } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
 
     const booking = await bookingmodel.findById(bookingId);
 
@@ -227,7 +236,7 @@ exports.updateBookingStatus = async (req, res) => {
     }
 
     // 🔐 Provider ownership check
-    if (String(booking.provider_id) !== providerId) {
+    if (String(booking.provider_id) !== String(providerId)) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized access",
@@ -238,31 +247,13 @@ exports.updateBookingStatus = async (req, res) => {
     const today = new Date();
     const diffDays = differenceInDays(firstBookingDate, today);
 
-    /* ================= AUTO REJECT (PENDING + 10 DAYS) ================= */
-    if (booking.status === "pending" && diffDays <= 10) {
-      booking.status = "rejected";
-      booking.rejection_reason =
-        "Automatically rejected due to less than or equal to 10 days remaining";
-
-      await booking.save();
-
-      return res.status(200).json({
-        success: true,
-        message: "Booking automatically rejected due to 10-day rule",
-        booking,
-      });
-    }
-
     /* ================= PENDING ================= */
     if (booking.status === "pending") {
-      if (!["accepted", "rejected"].includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid status change",
-        });
+      if (status === "accepted") {
+        booking.status = "accepted";
       }
 
-      if (status === "rejected") {
+      else if (status === "rejected") {
         if (!rejection_reason) {
           return res.status(400).json({
             success: false,
@@ -274,34 +265,44 @@ exports.updateBookingStatus = async (req, res) => {
         booking.rejection_reason = rejection_reason;
       }
 
-      if (status === "accepted") {
-        booking.status = "accepted";
+      else {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid status for pending booking",
+        });
       }
     }
 
     /* ================= ACCEPTED ================= */
-    if (booking.status === "accepted") {
-      if (status !== "rejected") {
-        return res.status(400).json({
-          success: false,
-          message: "Only rejection allowed",
-        });
+    else if (booking.status === "accepted") {
+      if (status === "completed") {
+        booking.status = "completed";
       }
 
-      if (diffDays < 7) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "You can’t reject the booking because only 7 days remain. Please contact customer. Penalty applies.",
-        });
+      else if (status === "rejected") {
+        if (diffDays < 7) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "You can’t reject the booking because only 7 days remain. Please contact the customer.",
+          });
+        }
+
+        booking.status = "rejected";
+        booking.rejection_reason =
+          rejection_reason || "Rejected by provider";
       }
 
-      booking.status = "rejected";
-      booking.rejection_reason = rejection_reason || "Rejected by provider";
+      else {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid status for accepted booking",
+        });
+      }
     }
 
-    /* ================= BLOCK OTHERS ================= */
-    if (!["pending", "accepted"].includes(booking.status)) {
+    /* ================= FINAL STATES ================= */
+    else {
       return res.status(400).json({
         success: false,
         message: "Status change not allowed",
@@ -310,14 +311,15 @@ exports.updateBookingStatus = async (req, res) => {
 
     await booking.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Booking status updated successfully",
       booking,
     });
+
   } catch (error) {
     console.error("UPDATE STATUS ERROR:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to update booking status",
     });
