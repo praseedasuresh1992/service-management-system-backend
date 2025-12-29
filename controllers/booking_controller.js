@@ -211,7 +211,6 @@ exports.getBookingsByProvider = async (req, res) => {
 
 
 const { differenceInDays } = require("date-fns");
-const bookingmodel = require("../models/bookingmodel");
 
 exports.updateBookingStatus = async (req, res) => {
   try {
