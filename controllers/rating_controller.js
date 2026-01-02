@@ -5,10 +5,17 @@ const Rating = require("../models/rating_model");
 // ===============================
 exports.createRating = async (req, res) => {
   try {
-    const user_id = req.user.id;
-    const { booking_id, provider_id, category_id, rating, feedback } = req.body;
+    const user_id = req.user.id; // ✅ LOGGED-IN USER ID (JWT)
 
-    // prevent duplicate rating
+    const {
+      booking_id,
+      provider_id,
+      category_id,
+      rating,
+      feedback
+    } = req.body;
+
+    // prevent duplicate rating per booking
     const existing = await Rating.findOne({ booking_id });
     if (existing) {
       return res.status(400).json({
@@ -19,7 +26,7 @@ exports.createRating = async (req, res) => {
 
     const newRating = await Rating.create({
       booking_id,
-      user_id,
+      user_id,          // ✅ saved here
       provider_id,
       category_id,
       rating,
@@ -40,6 +47,7 @@ exports.createRating = async (req, res) => {
   }
 };
 
+ 
 // ===============================
 // GET RATINGS BY PROVIDER
 // ===============================
