@@ -55,9 +55,9 @@ exports.createRating = async (req, res) => {
 exports.getRatingsByProvider = async (req, res) => {
   try {
     console.log("controller hits")
-    const { providerId } = req.params;
+    const { provider_id } = req.params;
 
-    const ratings = await Rating.find({ provider_id: providerId })
+    const ratings = await Rating.find({ provider_id })
       .populate("user_id", "name")
       .populate("category_id", "category_name")
       .sort({ createdAt: -1 });
