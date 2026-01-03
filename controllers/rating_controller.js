@@ -55,7 +55,7 @@ exports.createRating = async (req, res) => {
 exports.getRatingsByProvider = async (req, res) => {
   try {
     console.log("controller hits")
-    const { provider_id } = req.params;
+    const provider_id = req.user.id;
 
     const ratings = await Rating.find({ provider_id })
       .populate("user_id", "name")

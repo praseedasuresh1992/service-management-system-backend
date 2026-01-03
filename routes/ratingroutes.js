@@ -8,7 +8,7 @@ router.post("/createrating", auth.authuser,auth.authorizeRoles("user") ,ratingCo
 
 // ⭐ Provider profile ratings
 router.get(
-  "/providerrating/:provider_id",auth.authuser,
+  "/providerrating",auth.authuser,
   auth.authorizeRoles("provider"),
   ratingController.getRatingsByProvider
 );
