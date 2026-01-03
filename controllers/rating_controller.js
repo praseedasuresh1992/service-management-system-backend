@@ -54,6 +54,7 @@ exports.createRating = async (req, res) => {
 
 exports.getRatingsByProvider = async (req, res) => {
   try {
+    console.log("controller hits")
     const { providerId } = req.params;
 
     const ratings = await Rating.find({ provider_id: providerId })
