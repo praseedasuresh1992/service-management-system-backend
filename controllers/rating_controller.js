@@ -69,13 +69,16 @@ exports.getRatingsByProvider = async (req, res) => {
         : (
             ratings.reduce((sum, r) => sum + r.rating, 0) / totalReviews
           ).toFixed(1);
-
+console.log("avg",averageRating)
+    console.log("total",totalReviews)
     return res.status(200).json({
       success: true,
       data: ratings,
       averageRating,
       totalReviews
     });
+    
+
 
   } catch (error) {
     console.error(error);
