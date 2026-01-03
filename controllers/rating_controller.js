@@ -51,33 +51,41 @@ exports.createRating = async (req, res) => {
 // ===============================
 // GET RATINGS BY PROVIDER
 // ===============================
+
 exports.getRatingsByProvider = async (req, res) => {
   try {
-    const { provider_id } = req.params;
+    const { providerId } = req.params;
 
-    const ratings = await Rating.find({ provider_id })
+    const ratings = await Rating.find({ provider_id: providerId })
       .populate("user_id", "name")
       .populate("category_id", "category_name")
       .sort({ createdAt: -1 });
 
-    // average rating
-    const avgRating =
-      ratings.reduce((sum, r) => sum + r.rating, 0) / (ratings.length || 1);
+    const totalReviews = ratings.length;
 
-    res.status(200).json({
+    const averageRating =
+      totalReviews === 0
+        ? 0
+        : (
+            ratings.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+          ).toFixed(1);
+
+    return res.status(200).json({
       success: true,
-      averageRating: avgRating.toFixed(1),
-      totalReviews: ratings.length,
-      data: ratings
+      data: ratings,
+      averageRating,
+      totalReviews
     });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Failed to fetch ratings"
     });
   }
 };
+
 
 // ===============================
 // GET ALL RATINGS (ADMIN)
