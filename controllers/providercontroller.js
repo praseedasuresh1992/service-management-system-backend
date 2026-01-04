@@ -145,16 +145,16 @@ exports.filterProviderforbooking = async (req, res) => {
     const { category_id, needs, location } = req.body;
     console.log("FILTER PAYLOAD:", req.body);
 
-    if (
-      !category_id ||
-      !location ||
-      !Array.isArray(needs) ||
-      !needs.length
-    ) {
-      return res.status(400).json({
-        message: "Invalid request payload"
-      });
-    }
+    // if (
+    //   !category_id ||
+    //   !location ||
+    //   !Array.isArray(needs) ||
+    //   !needs.length
+    // ) {
+    //   return res.status(400).json({
+    //     message: "Invalid request payload"
+    //   });
+    // }
 
     // Strict validation
     for (const n of needs) {
